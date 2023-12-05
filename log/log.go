@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 
+	"github.com/0xPolygonHermez/zkevm-sequence-sender"
 	"github.com/hermeznetwork/tracerr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// Environment represents the possible log environments.
-type Environment string
+// LogEnvironment represents the possible log environments.
+type LogEnvironment string
 
 const (
 	// EnvironmentProduction production log environment.
-	EnvironmentProduction = Environment("production")
+	EnvironmentProduction = LogEnvironment("production")
 	// EnvironmentDevelopment development log environment.
-	EnvironmentDevelopment = Environment("development")
+	EnvironmentDevelopment = LogEnvironment("development")
 )
 
 // Logger is a wrapper providing logging facilities.
@@ -26,11 +28,12 @@ type Logger struct {
 }
 
 // root logger
-var log *Logger
+var log atomic.Pointer[Logger]
 
 func getDefaultLog() *Logger {
-	if log != nil {
-		return log
+	l := log.Load()
+	if l != nil {
+		return l
 	}
 	// default level: debug
 	zapLogger, _, err := NewLogger(Config{
@@ -41,8 +44,8 @@ func getDefaultLog() *Logger {
 	if err != nil {
 		panic(err)
 	}
-	log = &Logger{x: zapLogger}
-	return log
+	log.Store(&Logger{x: zapLogger})
+	return log.Load()
 }
 
 // Init the logger with defined level. outputs defines the outputs where the
@@ -55,12 +58,7 @@ func Init(cfg Config) {
 	if err != nil {
 		panic(err)
 	}
-	log = &Logger{x: zapLogger}
-}
-
-// SetLogger sets the logger to the provided one.
-func SetLogger(zapLogger *zap.SugaredLogger) {
-	log = &Logger{x: zapLogger}
+	log.Store(&Logger{x: zapLogger})
 }
 
 // NewLogger creates the logger with defined level. outputs defines the outputs where the
@@ -87,7 +85,7 @@ func NewLogger(cfg Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 	zapCfg.Level = level
 	zapCfg.OutputPaths = cfg.Outputs
 	zapCfg.InitialFields = map[string]interface{}{
-		"version": cfg.Version,
+		"version": zkevm.Version,
 		"pid":     os.Getpid(),
 	}
 
@@ -244,14 +242,14 @@ func Warnf(template string, args ...interface{}) {
 // Fatalf calls log.Fatalf on the root Logger.
 func Fatalf(template string, args ...interface{}) {
 	args = appendStackTraceMaybeArgs(args)
-	getDefaultLog().Fatalf(template+" %s", args...)
+	getDefaultLog().Fatalf(template, args...)
 }
 
 // Errorf calls log.Errorf on the root logger and stores the error message into
 // the ErrorFile.
 func Errorf(template string, args ...interface{}) {
 	args = appendStackTraceMaybeArgs(args)
-	getDefaultLog().Errorf(template+" %s", args...)
+	getDefaultLog().Errorf(template, args...)
 }
 
 // appendStackTraceMaybeKV will append the stacktrace to the KV
