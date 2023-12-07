@@ -1,16 +1,7 @@
-/target
-/out
-/cache
-/coverage
-lcov.info
-.DS_Store
-.env
-.vscode
-.password
+dist
 
-broadcast/*/31337
-deployments/**/31337.*
+.idea
 
-# storage layout checker library
-storage_check_cache
-storage_check_report
+test/gethData
+test/coverage.out
+coverage.out

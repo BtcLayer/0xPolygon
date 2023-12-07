@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync/atomic"
 
-	"github.com/0xPolygonHermez/zkevm-sequence-sender"
+	dataavailability "github.com/0xPolygon/cdk-data-availability"
 	"github.com/hermeznetwork/tracerr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// LogEnvironment represents the possible log environments.
-type LogEnvironment string
+// Environment represents the possible log environments.
+type Environment string
 
 const (
 	// EnvironmentProduction production log environment.
-	EnvironmentProduction = LogEnvironment("production")
+	EnvironmentProduction = Environment("production")
 	// EnvironmentDevelopment development log environment.
-	EnvironmentDevelopment = LogEnvironment("development")
+	EnvironmentDevelopment = Environment("development")
 )
 
 // Logger is a wrapper providing logging facilities.
@@ -28,12 +27,11 @@ type Logger struct {
 }
 
 // root logger
-var log atomic.Pointer[Logger]
+var log *Logger
 
 func getDefaultLog() *Logger {
-	l := log.Load()
-	if l != nil {
-		return l
+	if log != nil {
+		return log
 	}
 	// default level: debug
 	zapLogger, _, err := NewLogger(Config{
@@ -44,8 +42,8 @@ func getDefaultLog() *Logger {
 	if err != nil {
 		panic(err)
 	}
-	log.Store(&Logger{x: zapLogger})
-	return log.Load()
+	log = &Logger{x: zapLogger}
+	return log
 }
 
 // Init the logger with defined level. outputs defines the outputs where the
@@ -58,7 +56,7 @@ func Init(cfg Config) {
 	if err != nil {
 		panic(err)
 	}
-	log.Store(&Logger{x: zapLogger})
+	log = &Logger{x: zapLogger}
 }
 
 // NewLogger creates the logger with defined level. outputs defines the outputs where the
@@ -85,7 +83,7 @@ func NewLogger(cfg Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 	zapCfg.Level = level
 	zapCfg.OutputPaths = cfg.Outputs
 	zapCfg.InitialFields = map[string]interface{}{
-		"version": zkevm.Version,
+		"version": dataavailability.Version,
 		"pid":     os.Getpid(),
 	}
 
@@ -93,10 +91,10 @@ func NewLogger(cfg Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	defer logger.Sync() //nolint:gosec,errcheck
+	defer logger.Sync() //nolint:errcheck
 
 	// skip 2 callers: one for our wrapper methods and one for the package functions
-	withOptions := logger.WithOptions(zap.AddCallerSkip(2)) //nolint:gomnd
+	withOptions := logger.WithOptions(zap.AddCallerSkip(2)) //nolint:mnd
 	return withOptions.Sugar(), &level, nil
 }
 
@@ -106,7 +104,7 @@ func WithFields(keyValuePairs ...interface{}) *Logger {
 	l := getDefaultLog().WithFields(keyValuePairs...)
 
 	// since we are returning a new instance, remove one caller from the
-	// stack, because we'll be calling the retruned Logger methods
+	// stack, because we'll be calling the returned Logger methods
 	// directly, not the package functions.
 	x := l.x.WithOptions(zap.AddCallerSkip(-1))
 	l.x = x
@@ -242,14 +240,14 @@ func Warnf(template string, args ...interface{}) {
 // Fatalf calls log.Fatalf on the root Logger.
 func Fatalf(template string, args ...interface{}) {
 	args = appendStackTraceMaybeArgs(args)
-	getDefaultLog().Fatalf(template, args...)
+	getDefaultLog().Fatalf(template+" %s", args...)
 }
 
 // Errorf calls log.Errorf on the root logger and stores the error message into
 // the ErrorFile.
 func Errorf(template string, args ...interface{}) {
 	args = appendStackTraceMaybeArgs(args)
-	getDefaultLog().Errorf(template, args...)
+	getDefaultLog().Errorf(template+" %s", args...)
 }
 
 // appendStackTraceMaybeKV will append the stacktrace to the KV

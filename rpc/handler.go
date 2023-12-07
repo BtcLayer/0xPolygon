@@ -9,7 +9,7 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/0xPolygon/cdk-rpc/log"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/gorilla/websocket"
 )
 
@@ -35,15 +35,8 @@ func (f *funcData) numParams() int {
 
 type handleRequest struct {
 	Request
-	HttpRequest *http.Request
 	wsConn      *websocket.Conn
-}
-
-func newHandleRequest(r Request, hr *http.Request) handleRequest {
-	return handleRequest{
-		Request:     r,
-		HttpRequest: hr,
-	}
+	HttpRequest *http.Request
 }
 
 // Handler manage services to handle jsonrpc requests
@@ -130,7 +123,11 @@ func (h *Handler) Handle(req handleRequest) Response {
 	// check params passed by request match function params
 	var testStruct []interface{}
 	if err := json.Unmarshal(req.Params, &testStruct); err == nil && len(testStruct) > fd.numParams() {
-		return NewResponse(req.Request, nil, NewRPCError(InvalidParamsErrorCode, fmt.Sprintf("too many arguments, want at most %d", fd.numParams())))
+		return NewResponse(
+			req.Request,
+			nil,
+			NewRPCError(InvalidParamsErrorCode, fmt.Sprintf("too many arguments, want at most %d", fd.numParams())),
+		)
 	}
 
 	inputs := make([]interface{}, fd.numParams()-inArgsOffset)
@@ -149,7 +146,7 @@ func (h *Handler) Handle(req handleRequest) Response {
 
 	output := fd.fv.Call(inArgs)
 	if err := getError(output[1]); err != nil {
-		log.Errorf("failed call: [%v]%v. Params: %v", err.ErrorCode(), err.Error(), string(req.Params))
+		log.Infof("failed call: [%v]%v. Params: %v", err.ErrorCode(), err.Error(), string(req.Params))
 		return NewResponse(req.Request, nil, err)
 	}
 
@@ -168,11 +165,14 @@ func (h *Handler) HandleWs(reqBody []byte, wsConn *websocket.Conn, httpReq *http
 	log.Debugf("WS message received: %v", string(reqBody))
 	var req Request
 	if err := json.Unmarshal(reqBody, &req); err != nil {
-		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())).Bytes()
+		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, errInvalidJSONReq.Error())).Bytes()
 	}
 
-	handleReq := newHandleRequest(req, httpReq)
-	handleReq.wsConn = wsConn
+	handleReq := handleRequest{
+		Request:     req,
+		wsConn:      wsConn,
+		HttpRequest: httpReq,
+	}
 
 	return h.Handle(handleReq).Bytes()
 }
@@ -219,8 +219,8 @@ func (h *Handler) registerService(service Service) {
 func (h *Handler) getFnHandler(req Request) (*serviceData, *funcData, Error) {
 	methodNotFoundErrorMessage := fmt.Sprintf("the method %s does not exist/is not available", req.Method)
 
-	callName := strings.SplitN(req.Method, "_", 2) //nolint:gomnd
-	if len(callName) != 2 {                        //nolint:gomnd
+	callName := strings.SplitN(req.Method, "_", 2) //nolint:mnd
+	if len(callName) != 2 {                        //nolint:mnd
 		return nil, nil, NewRPCError(NotFoundErrorCode, methodNotFoundErrorMessage)
 	}
 
@@ -258,7 +258,12 @@ func validateFunc(funcName string, fv reflect.Value, isMethod bool) (inNum int, 
 		return
 	}
 	if !isRPCErrorType(ft.Out(1)) {
-		err = fmt.Errorf("unexpected type for the second return value of the function '%s': '%s'. Expected '%s'", funcName, ft.Out(1), rpcErrType)
+		err = fmt.Errorf(
+			"unexpected type for the second return value of the function '%s': '%s'. Expected '%s'",
+			funcName,
+			ft.Out(1),
+			rpcErrType,
+		)
 		return
 	}
 
