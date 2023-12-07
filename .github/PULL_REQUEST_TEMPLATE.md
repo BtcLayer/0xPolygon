@@ -12,9 +12,36 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 
 # Checklist:
 
-- [ ] I have used the proper Node.js version (e.g., using the `.nvmrc` file and the `nvm use` command).
-- [ ] I have formatted my code using prettier
-- [ ] I have installed [pre-commit](https://pre-commit.com/#installation) and have run `pre-commit install` to install the git hooks
+Before deployment
+
+- [ ] 100% test and branch coverage
+- [ ] check slither for severe issues
+- [ ] fuzz and invariant tests (when applicable)
+- [ ] formal verification (when applicable)
+- [ ] deployment or upgrade scripts ready
+- [ ] version management agreed upon and implemented
+- [ ] internal team review
+- [ ] **Security Team review**
+
+After deployment
+
+- [ ] transfer ownership after deployments (when applicable)
+- [ ] complete upgrade (when applicable)
+- [ ] generate deployment/upgrade log files
+- [ ] update [static](https://github.com/maticnetwork/static/tree/master/network) with new contract address and/or version
+
+---
+
+### Considerations
+
+- I have followed the [contributing guidelines](../CONTRIBUTING.md).
+- My code follows the style guidelines of this project and I have run `forge fmt` and prettier to ensure the code style is valid
+- I have performed a self-review of my own code
+- I have commented my code, particularly in hard-to-understand areas
+- I have made corresponding changes to the documentation
+- My changes generate no new warnings
+- I have added tests that prove my fix is effective or that my feature works
+- New and existing unit tests pass locally with my changes
 
 ### Additional context
 
