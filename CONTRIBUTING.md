@@ -1,177 +1,82 @@
-# Contributing
+We are really glad you're reading this, because we need volunteer developers to help this project come to fruition!✨Read our [Code of Conduct](./CODE_OF_CONDUCT.md) to keep our community approachable and respectable.
 
-- [Install](#install)
-- [Pre-commit Hooks](#pre-commit-hooks)
-- [Branching](#branching)
-  - [Main](#main)
-  - [Staging](#staging)
-  - [Dev](#dev)
-  - [Feature](#feature)
-  - [Fix](#fix)
-- [Code Practices](#code-practices)
-  - [Code Style](#code-style)
-  - [Interfaces](#interfaces)
-  - [NatSpec \& Comments](#natspec--comments)
-- [Versioning](#versioning)
-- [Testing](#testing)
-  - [Deployer Template](#deployer-template)
-- [Deployment](#deployment)
-  - [Deployer Template](#deployer-template-1)
-  - [Deployment](#deployment-1)
-  - [Deployment Info Generation](#deployment-info-generation)
-- [Deployer Template Script](#deployer-template-script)
-- [Releases](#releases)
+In this guide you will get an overview of the contribution workflow from opening an issue, creating a PR, and merging the PR.
 
-## Install
+## Feature requests
 
-Follow these steps to set up your local environment for development:
+If you find yourself wishing for a feature that doesn't exist in Chain Indexer Framework, you are probably not alone. There are bound to be others out there with similar needs. Many of the features that Chain Indexer Framework has today have been added because our users saw the need. Open an issue on our issues list on GitHub which describes the feature you would like to see, why you need it, and how it should work.
 
-- [Install foundry](https://book.getfoundry.sh/getting-started/installation)
-- Install dependencies: `forge install`
-- [Install pre-commit](https://pre-commit.com/#installation)
-- Install pre commit hooks: `pre-commit install`
+### How to Get in Touch
 
-## Pre-commit Hooks
+Our active Discord community is always ready to help and support new and experienced contributors alike. Link
 
-Follow the [installation steps](#install) to enable pre-commit hooks. To ensure consistency in our formatting `pre-commit` is used to check whether code was formatted properly and the documentation is up to date. Whenever a commit does not meet the checks implemented by pre-commit, the commit will fail and the pre-commit checks will modify the files to make the commits pass. Include these changes in your commit for the next commit attempt to succeed. On pull requests the CI checks whether all pre-commit hooks were run correctly.
-This repo includes the following pre-commit hooks that are defined in the `.pre-commit-config.yaml`:
+## Contributing code and documentation changes
 
-- `mixed-line-ending`: This hook ensures that all files have the same line endings (LF).
-- `format`: This hook uses `forge fmt` to format all Solidity files.
-- `doc`: This hook uses `forge doc` to automatically generate documentation for all Solidity files whenever the NatSpec documentation changes. The `script/util/doc_gen.sh` script is used to generate documentation. Forge updates the commit hash in the documentation automatically. To only generate new documentation when the documentation has actually changed, the script checks whether more than just the hash has changed in the documentation and discard all changes if only the hash has changed.
-- `prettier`: All remaining files are formatted using prettier.
+If you would like to contribute a new feature or a bug fix to **Chain Indexer Framework**, please discuss your idea first on the GitHub issue. If there is no GitHub issue for your idea, please open one. It may be that somebody is already working on it, or that there are particular complexities that you should know about before starting the implementation. There are often a number of ways to fix a problem and it is important to find the right approach before spending time on a PR that cannot be merged.
 
-## Branching
+We add the `help wanted` label to existing GitHub issues for which community contributions are particularly welcome, and we use the `good first issue` label to mark issues that we think will be suitable for new contributors.
 
-This section outlines the branching strategy of this repo.
+### Fork and clone the repository
 
-### Main
+You will need to fork the main **Chain Indexer Framework** code or documentation repository and clone it to your local machine. See [github help page](https://help.github.com/articles/fork-a-repo) for help.
 
-The main branch is supposed to reflect the deployed state on all networks. Any pull requests into this branch MUST come from the staging branch. The main branch is protected and requires a separate code review by the security team. Whenever the main branch is updated, a new release is created with the latest version. For more information on versioning, check [here](#versioning).
+Further instructions for specific projects are given below.
 
-### Staging
+### Tips for code changes
 
-The staging branch reflects new code complete deployments or upgrades containing fixes and/or features. Any pull requests into this branch MUST come from the dev branch. The staging branch is used for security audits and deployments. Once the deployment is complete and deployment log files are generated, the branch can be merged into main. For more information on the deployment and log file generation check [here](#deployment--versioning).
+Following these tips prior to raising a pull request will speed up the review cycle.
 
-### Dev
+- Add appropriate unit tests
+- Add integration tests, if applicable
+- Lines that are not part of your change should not be edited (e.g. don't format unchanged lines, don't reorder existing imports)
+- Add the appropriate license headers to any new files
 
-This is the active development branch. All pull requests into this branch MUST come from fix or feature branches. Upon code completion this branch is merged into staging for auditing and deployment.
+### Submitting your changes
 
-### Feature
+Once your changes and tests are ready to submit for review:
 
-Any new feature should be developed on a separate branch. The naming convention for these branches is `feat/*`. Once the feature is complete, a pull request into the dev branch can be created.
+1. Test your changes
 
-### Fix
+   Run the test suite to make sure that nothing is broken. See the TESTING file for help running tests.
 
-Any bug fixes should be developed on a separate branch. The naming convention for these branches is `fix/*`. Once the fix is complete, a pull request into the dev branch can be created.
+2. Rebase your changes
 
-## Code Practices
+   Update your local repository with the most recent code from the main **Chain Indexer Framework** repository, and rebase your branch on top of the latest main branch. We prefer your initial changes to be squashed into a single commit. Later, if we ask you to make changes, add them as separate commits. This makes them easier to review. As a final step before merging we will either ask you to squash all commits yourself or we'll do it for you.
 
-### Code Style
+3. Submit a pull request
 
-The repo follows the official [Solidity Style Guide](https://docs.soliditylang.org/en/latest/style-guide.html). In addition to that, this repo also borrows the following rules from [OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/GUIDELINES.md#solidity-conventions):
+   Push your local changes to your forked copy of the repository and [submit a pull request](https://help.github.com/articles/using-pull-requests). In the pull request, choose a title which sums up the changes that you have made, and in the body provide more details about what your changes do. Also mention the number of the issue where discussion has taken place, eg "Closes #123".
 
-- Internal or private state variables or functions should have an underscore prefix.
+Then sit back and wait. There will probably be discussion about the pull request and, if any changes are needed, we would love to work with you to get your pull request merged into **Chain Indexer Framework**.
 
-  ```solidity
-  contract TestContract {
-      uint256 private _privateVar;
-      uint256 internal _internalVar;
-      function _testInternal() internal { ... }
-      function _testPrivate() private { ... }
-  }
-  ```
+Please adhere to the general guideline that you should never force push to a publicly shared branch. Once you have opened your pull request, you should consider your branch publicly shared. Instead of force pushing you can just add incremental commits; this is generally easier on your reviewers. If you need to pick up changes from main, you can merge main into your branch. A reviewer might ask you to rebase a long-running pull request in which case force pushing is okay for that request. Note that squashing at the end of the review process should also not be done, that can be done when the pull request is [integrated via GitHub](https://github.com/blog/2141-squash-your-commits).
 
-- Events should generally be emitted immediately after the state change that they
-  represent, and should be named in the past tense. Some exceptions may be made for gas
-  efficiency if the result doesn't affect observable ordering of events.
+### Pull Requests for substantive changes (e.g. everything except comments and docs)
 
-  ```solidity
-  function _burn(address who, uint256 value) internal {
-      super._burn(who, value);
-      emit TokensBurned(who, value);
-  }
-  ```
+1. Any PR that introduces a logic change should include tests. (In many cases, the tests will take more time to write than the actual code).
+2. All PRs should sit for 72 hours with the `pleasereview` tag in order to garner feedback.
+3. No PR should be merged until it has been reviewed, passes CI, and all reviews' comments are
+   addressed.
+4. PRs should:
+   1. have a narrow, well-defined focus.
+   2. make the smallest set of changes possible to achieve their goal.
+   3. include a clear description in the opening comment.
+   4. preserve the conventions and stylistic consistency of any files they modify.
+5. Given the choice between a conservative change that mostly works and an adventurous change which seems better but introduces uncertainty - prefer the conservative change.
 
-- Interface names should have a capital I prefix.
+### Reviews
 
-  ```solidity
-  interface IERC777 {
-  ```
+The end goal of review is to suggest useful improvements to the author. Reviews should finish with approval unless there are issues that would result in:
 
-- Contracts not intended to be used standalone should be marked abstract
-  so they are required to be inherited to other contracts.
+1. Buggy behaviour.
+2. Undue maintenance burden.
+3. Pessimisation (i.e. speed reduction / meaningful build-size increases).
+4. Feature reduction (i.e. it removes some aspect of functionality that users rely on).
+5. Avoidable risk (i.e it's difficult to test or hard to anticipate the implications of, without
+   being strictly necessary to fix something broken).
 
-  ```solidity
-  abstract contract AccessControl is ..., {
-  ```
+Read more in [Review Guidelines](./REVIEW.md).
 
-- Unchecked arithmetic blocks should contain comments explaining why overflow is guaranteed not to happen. If the reason is immediately apparent from the line above the unchecked block, the comment may be omitted.
+### License
 
-### Interfaces
-
-Every contract MUST implement their corresponding interface that includes all externally callable functions, errors and events.
-
-### NatSpec & Comments
-
-Interfaces should be the entrypoint for all contracts. When exploring the a contract within the repository, the interface MUST contain all relevant information to understand the functionality of the contract in the form of NatSpec comments. This includes all externally callable functions, errors and events. The NatSpec documentation MUST be added to the functions, errors and events within the interface. This allows a reader to understand the functionality of a function before moving on to the implementation. The implementing functions MUST point to the NatSpec documentation in the interface using `@inheritdoc`. Internal and private functions shouldn't have NatSpec documentation except for `@dev` comments, whenever more context is needed. Additional comments within a function should only be used to give more context to more complex operations, otherwise the code should be kept readable and self-explanatory.
-
-## Versioning
-
-This repo utilizes [semantic versioning](https://semver.org/) for smart contracts. An `IVersioned` interface is included in the [interfaces directory](src/interface/IVersioned.sol) exposing a unified versioning interface for all contracts. This version MUST be included in all contracts, whether they are upgradeable or not, to be able to easily match deployed versions. For example, in the case of a non-upgradeable contract one version could be deployed to a network and later a new version might be deployed to another network. The exposed `version()` function is also used by the [Deployment Log Generator](https://github.com/0xPolygon/forge-chronicles#readme) to extract information about the version.
-
-Whenever contracts are modified, only the version of the changed contracts should be updated. Unmodified contracts should remain on the version of their last change.
-
-## Testing
-
-### Deployer Template
-
-This repo provides a deployer template library for consistency between scripts and unit tests. For more information on how to use the template, check [here](https://github.com/0xPolygon/deployer-kit#readme).
-
-## Deployment
-
-This repo utilizes versioned deployments. Any changes to a contract should update the version of this specific contract. A script is provided that extracts deployment information from the `run-latest.json` file within the `broadcast` directory generated while the forge script runs. From this information a JSON and markdown file is generated containing various information about the deployment itself as well as past deployments.
-
-### Deployer Template
-
-This repo provides a deployer template library for consistency between scripts and unit tests. For more information on how to use the template, check [here](https://github.com/0xPolygon/deployer-kit#readme).
-
-### Deployment
-
-This repo set up the following RPCs in the `foundry.toml` file:
-
-- mainnet: Ethereum Mainnet
-- goerli: Ethereum Goerli
-- sepolia: Ethereum Sepolia
-- polygon_pos: Polygon PoS
-- mumbai: Polygon Mumbai
-- polygon_zkevm: Polygon zkEVM
-- polygon_zkevm_testnet: Polygon zkEVM Testnet
-
-To deploy the contracts, provide the `--broadcast` flag to the forge script command. Should the etherscan verification time out, it can be picked up again by replacing the `--broadcast` flag with `--resume`.
-Deploy the contracts to one of the predefined networks by providing the according key with the `--rpc-url` flag. Most of the predefined networks require the `INFURA_KEY` environment variable to be set in the `.env` file.
-Including the `--verify` flag will verify deployed contracts on Etherscan. Define the appropriate environment variable for the Etherscan api key in the `.env` file.
-
-```shell
-forge script script/Deploy.s.sol --broadcast --rpc-url <rpc_url> --verify
-```
-
-## Releases
-
-Releases should be created whenever the code on the main branch is updated to reflect a deployment or an upgrade on a network. The release should be named after the version of the contracts deployed or upgraded.
-The release should include the following:
-
-- In case of a MAJOR version
-  - changelog
-  - summary of breaking changes
-  - summary of new features
-  - summary of fixes
-- In case of a MINOR version
-  - changelog
-  - summary of new features
-  - summary of fixes
-- In case of a PATCH version
-  - changelog
-  - summary of fixes
-- Deployment information (can be copied from the generated log files)
-  - Addresses of the deployed contracts
+By contributing to **Chain Indexer Framework**, you agree that your contributions will be licensed under its [license](./LICENSE).

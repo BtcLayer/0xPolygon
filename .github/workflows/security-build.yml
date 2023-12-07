@@ -1,22 +1,24 @@
 name: Security Build
 on:
   push:
+    branches:
+      - main # or the name of your main and preffered branches
+      - dev
+      - staging # or the name of your main and preffered branches
   workflow_dispatch: {}
-
+  pull_request:
+    types: [opened, synchronize, reopened]
+    
 jobs:
-  govuln:
-    name: Run govuln check and Publish
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Running govulncheck
-        uses: Templum/govulncheck-action@v0.0.8
-        continue-on-error: true
-        env:
-          DEBUG: "true"
         with:
-          go-version: 1.21.x
-          vulncheck-version: latest
-          package: ./...
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          fail-on-vuln: true
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

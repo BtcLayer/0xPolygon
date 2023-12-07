@@ -1,91 +1,107 @@
 {
-  "name": "cdk-validium-contracts",
-  "description": "Core contracts for the Polygon CDK Validium",
-  "version": "0.0.1",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/0xPolygon/cdk-validium-contracts.git"
-  },
-  "main": "index.js",
-  "keywords": [
-    "zkevm",
-    "snark",
-    "polygon",
-    "stark",
-    "validium",
-    "EVM",
-    "ethereum",
-    "blockchain"
-  ],
-  "author": "0xPolygon",
-  "files": [
-    "contracts",
-    "index.js",
-    "compiled-contracts",
-    "src"
-  ],
-  "bugs": {
-    "url": "https://github.com/0xPolygon/cdk-validium-contracts/issues"
-  },
-  "homepage": "https://github.com/0xPolygon/CDKValidium-contracts#readme",
-  "license": "pending",
-  "dependencies": {
-    "chai": "^4.3.7",
-    "ethers": "^5.7.2"
-  },
-  "devDependencies": {
-    "@0xpolygonhermez/zkevm-commonjs": "github:0xPolygonHermez/zkevm-commonjs#develop",
-    "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "@nomiclabs/hardhat-etherscan": "^3.1.7",
-    "@nomiclabs/hardhat-waffle": "^2.0.5",
-    "@openzeppelin/contracts": "4.8.2",
-    "@openzeppelin/contracts-upgradeable": "4.8.2",
-    "@openzeppelin/hardhat-upgrades": "1.22.1",
-    "@openzeppelin/test-helpers": "0.5.16",
-    "circomlibjs": "0.1.1",
-    "dotenv": "^8.6.0",
-    "eslint": "^8.36.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-mocha": "^9.0.0",
-    "ethereum-waffle": "^3.4.4",
-    "ffjavascript": "^0.2.57",
-    "hardhat": "^2.16.1",
-    "hardhat-dependency-compiler": "^1.1.3",
-    "hardhat-gas-reporter": "^1.0.9",
-    "prettier": "^2.8.4",
-    "prettier-plugin-solidity": "^1.1.3",
-    "solc-0.8": "npm:solc@0.8.20",
-    "solidity-coverage": "^0.7.22",
-    "solidity-docgen": "^0.5.17"
+  "name": "@maticnetwork/chain-indexer-framework",
+  "version": "1.3.13",
+  "description": "blockchain data indexer",
+  "type": "module",
+  "exports": {
+    ".": "./dist/public/index.js",
+    "./schemas/*": "./dist/schemas/*",
+    "./kafka/producer/*": "./dist/public/kafka/producer/*.js",
+    "./kafka/consumer/*": "./dist/public/kafka/consumer/*.js",
+    "./coder/*": "./dist/public/coder/*.js",
+    "./block_producers/*": "./dist/public/block_producers/*.js",
+    "./enums/*": "./dist/public/enums/*.js",
+    "./mongo/*": "./dist/public/mongo/database.js",
+    "./interfaces/*": "./dist/public/interfaces/*.js",
+    "./errors/*": "./dist/public/errors/*.js",
+    "./event_consumer/*": "./dist/public/event_consumer/*.js",
+    "./data_transformation/*": "./dist/public/data_transformation/*.js",
+    "./logger": "./dist/public/logger/logger.js",
+    "./filter": "./dist/public/filter/bloom_filter.js",
+    "./jsonrpcclient": "./dist/public/rpc/json_rpc_client.js"
   },
   "scripts": {
-    "saveDeployment:sepolia": "mkdir -p deployments/sepolia_$(date +%s) && cp -r deployment/deploy_*.json deployments/sepolia_$(date +%s) && cp .openzeppelin/sepolia.json deployments/sepolia_$(date +%s) && cp deployment/genesis.json deployments/sepolia_$(date +%s)",
-    "saveDeployment:mainnet": "mkdir -p deployments/mainnet_$(date +%s) && cp -r deployment/deploy_*.json deployments/mainnet_$(date +%s) && cp .openzeppelin/mainnet.json deployments/mainnet_$(date +%s) && cp deployment/genesis.json deployments/mainnet_$(date +%s)",
-    "test": "npx hardhat test test/contracts/**.test.js",
-    "docgen": "npx solidity-docgen --solc-module solc-0.8 -t ./docs/templates -e ./contracts/verifiers,./contracts/mocks",
-    "prepare:testnet:CDKValidium:localhost": "npx hardhat run deployment/testnet/prepareTestnet.js --network localhost",
-    "deploy:CDKValidium:localhost": "rm -f .openzeppelin/unknown-31337.json && node deployment/1_createGenesis.js && npx hardhat run deployment/2_deployCDKValidiumDeployer.js --network localhost && npx hardhat run deployment/3_deployContracts.js --network localhost",
-    "deploy:testnet:CDKValidium:localhost": "npm run prepare:testnet:CDKValidium:localhost && npm run deploy:CDKValidium:localhost",
-    "prepare:testnet:CDKValidium:sepolia": "npx hardhat run deployment/testnet/prepareTestnet.js --network sepolia",
-    "deploy:CDKValidium:sepolia": "node deployment/1_createGenesis.js && npx hardhat run deployment/3_deployContracts.js --network sepolia && npm run saveDeployment:sepolia",
-    "deploy:deployer:CDKValidium:sepolia": "npx hardhat run deployment/2_deployCDKValidiumDeployer.js --network sepolia",
-    "verify:deployer:CDKValidium:sepolia": "npx hardhat run deployment/verifyCDKValidiumDeployer.js --network sepolia",
-    "deploy:testnet:CDKValidium:sepolia": "npm run prepare:testnet:CDKValidium:sepolia && npm run deploy:CDKValidium:sepolia",
-    "upgrade:timelock:sepolia": "npx hardhat run upgrade/timeLockUpgrade.js --network sepolia",
-    "verify:CDKValidium:sepolia": "npx hardhat run deployment/verifyContracts.js --network sepolia",
-    "deploy:deployer:CDKValidium:mainnet": "npx hardhat run deployment/2_deployCDKValidiumDeployer.js --network mainnet",
-    "verify:deployer:CDKValidium:mainnet": "npx hardhat run deployment/verifyCDKValidiumDeployer.js --network mainnet",
-    "deploy:CDKValidium:mainnet": "node deployment/1_createGenesis.js && npx hardhat run deployment/3_deployContracts.js --network mainnet && npm run saveDeployment:mainnet",
-    "upgrade:timelock:mainnet": "npx hardhat run upgrade/timeLockUpgrade.js --network mainnet",
-    "verify:CDKValidium:mainnet": "npx hardhat run deployment/verifyContracts.js --network mainnet",
-    "lint": "npx eslint ./test && npx eslint ./docker/scripts && npx eslint ./deployment && npx eslint ./src",
-    "lint:fix": "npx eslint ./test --fix && npx eslint ./docker/scripts --fix && npx eslint ./deployment --fix && npx eslint ./src --fix",
-    "compile": "npx hardhat compile",
-    "docker:contracts": "./docker/scripts/deploy-docker.sh",
-    "push:docker:contracts": "docker push hermeznetwork/geth-cdk-validium-contracts",
-    "update:genesis": "node deployment/1_createGenesis.js && node deployment/1_createGenesis.js --test --input ../docker/scripts/deploy_parameters_docker.json --out ../docker/scripts/genesis_docker.json",
-    "coverage": "npx hardhat coverage",
-    "gas:report": "REPORT_GAS=true npx hardhat test",
-    "gas:report:file": "rm -f .openzeppelin/unknown-31337.json && REPORT_GAS=true REPORT_GAS_FILE=true npx hardhat test"
+    "tests": "jest --coverage",
+    "tests:integration": "echo 'Hello integration tests'",
+    "prepublish": "npm run build && npm run tests",
+    "build": "tsc && tsc-alias && npm run copy-proto",
+    "build:link": "npm run build && npm link",
+    "copy-proto": "cp -R ./schemas/ ./dist/schemas",
+    "lint": "npx eslint \"./internal/**/*.ts\" \"./public/**/*.ts\"",
+    "lint:fix": "npx eslint --fix \"./internal/**/*.ts\" \"./public/**/*.ts\""
+  },
+  "author": "nitinmittal23",
+  "license": "MIT",
+  "files": [
+    "./dist/**"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xPolygon/chain-indexer-framework.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0xPolygon/chain-indexer-framework/issues"
+  },
+  "homepage": "https://github.com/0xPolygon/chain-indexer-framework#readme",
+  "dependencies": {
+    "axios": "^1.3.6",
+    "ethereum-bloom-filters": "^1.2.0",
+    "long": "^5.2.0",
+    "mongoose": "^6.5.2",
+    "node-rdkafka": "^2.13.0",
+    "protobufjs": "^7.0.0",
+    "rxjs": "^7.5.6",
+    "web3-core": "^1.7.5",
+    "web3-core-helpers": "^1.8.2",
+    "web3-core-subscriptions": "^1.7.5",
+    "web3-eth": "^1.8.0",
+    "web3-eth-abi": "^1.8.0",
+    "web3-eth-contract": "^1.8.1",
+    "web3-utils": "^1.8.2",
+    "winston": "^3.8.2",
+    "winston-transport-sentry-node": "^2.7.0"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.19.1",
+    "@babel/preset-typescript": "^7.18.6",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^9.0.4",
+    "@semantic-release/npm": "^10.0.5",
+    "@types/jest": "^29.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "babel-plugin-transform-import-meta": "^2.2.0",
+    "eslint": "^8.24.0",
+    "husky": "2.4.1",
+    "jest": "^29.0.3",
+    "semantic-release": "^21.0.9",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.7",
+    "typescript": "^4.9.5"
+  },
+  "release": {
+    "tagFormat": "${version}",
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/github",
+      "@semantic-release/npm",
+      [
+        "@semantic-release/git",
+        {
+          "message": ":bookmark: chore(release): ${nextRelease.version} \n\n${nextRelease.notes}"
+        }
+      ]
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
   }
 }
