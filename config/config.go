@@ -1,103 +1,46 @@
 package config
 
 import (
-	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
+	"path"
 
-	"github.com/0xPolygon/cdk-data-availability/config/types"
-	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/log"
-	"github.com/0xPolygon/cdk-data-availability/rpc"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
-	"github.com/urfave/cli/v2"
+	"github.com/0xPolygon/cdk-contracts-tooling/rollup"
+	"github.com/0xPolygon/cdk-contracts-tooling/rollupmanager"
 )
 
-const (
-	// FlagCfg flag used for config aka cfg
-	FlagCfg = "cfg"
-)
-
-// Config represents the full configuration of the data node
-type Config struct {
-	PrivateKey types.KeystoreFileConfig
-	DB         db.Config
-	Log        log.Config
-	RPC        rpc.Config
-	L1         L1Config
-}
-
-// L1Config is a struct that defines L1 contract and service settings
-type L1Config struct {
-	RpcURL                     string         `mapstructure:"RpcURL"`
-	PolygonValidiumAddress     string         `mapstructure:"PolygonValidiumAddress"`
-	DataCommitteeAddress       string         `mapstructure:"DataCommitteeAddress"`
-	Timeout                    types.Duration `mapstructure:"Timeout"`
-	RetryPeriod                types.Duration `mapstructure:"RetryPeriod"`
-	BlockBatchSize             uint           `mapstructure:"BlockBatchSize"`
-	TrackSequencer             bool           `mapstructure:"TrackSequencer"`
-	TrackSequencerPollInterval types.Duration `mapstructure:"TrackSequencerPollInterval"`
-
-	// GenesisBlock represents the block number where PolygonValidium contract is deployed on L1
-	GenesisBlock uint64 `mapstructure:"GenesisBlock"`
-}
-
-// Load loads the configuration baseed on the cli context
-func Load(ctx *cli.Context) (*Config, error) {
-	cfg, err := Default()
+func Load(l1Network, rmAlias, rAlias, baseDir string) (*RPCs, *rollupmanager.RollupManager, *rollup.Rollup, interface{}, error) {
+	fmt.Println("loading the rollup manager info from file")
+	rollupManagerPath := path.Join(baseDir, "networks", l1Network, rmAlias)
+	rm, err := rollupmanager.LoadFromFile(nil, path.Join(rollupManagerPath, "rollupManager.json"))
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	viper.AutomaticEnv()
-	replacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(replacer)
-	viper.SetEnvPrefix("DATA_NODE")
-
-	configFilePath := ctx.String(FlagCfg)
-	if configFilePath != "" {
-		dirName, fileName := filepath.Split(configFilePath)
-
-		fileExtension := strings.TrimPrefix(filepath.Ext(fileName), ".")
-		fileNameWithoutExtension := strings.TrimSuffix(fileName, "."+fileExtension)
-
-		viper.AddConfigPath(dirName)
-		viper.SetConfigName(fileNameWithoutExtension)
-		viper.SetConfigType(fileExtension)
-		err = viper.ReadInConfig()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	decodeHooks := []viper.DecoderConfigOption{
-		// this allows arrays to be decoded from env var separated by ",", example: MY_VAR="value1,value2,value3"
-		viper.DecodeHook(
-			mapstructure.ComposeDecodeHookFunc(
-				mapstructure.TextUnmarshallerHookFunc(),
-				mapstructure.StringToSliceHookFunc(","),
-			),
-		),
-	}
-	err = viper.Unmarshal(&cfg, decodeHooks...)
-	return cfg, err
-}
-
-// NewKeyFromKeystore creates a private key from a keystore file
-func NewKeyFromKeystore(cfg types.KeystoreFileConfig) (*ecdsa.PrivateKey, error) {
-	if cfg.Path == "" && cfg.Password == "" {
-		return nil, nil
-	}
-	keystoreEncrypted, err := os.ReadFile(filepath.Clean(cfg.Path))
+	fmt.Println("loading RPC info")
+	rpcs, err := LoadRPCs()
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, nil, err
 	}
-	key, err := keystore.DecryptKey(keystoreEncrypted, cfg.Password)
+
+	fmt.Println("loading the rollup info from file")
+	rollupPath := path.Join(rollupManagerPath, "rollups")
+	r, err := rollup.LoadFromFile(nil, path.Join(rollupPath, rAlias+".json"))
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, nil, err
 	}
-	return key.PrivateKey, nil
+
+	fmt.Println("loading genesis file")
+	genesisData, err := os.ReadFile(path.Join(baseDir, "genesis", r.GenesisRoot.Hex()+".json"))
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	var genesis interface{}
+	err = json.Unmarshal(genesisData, &genesis)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	return rpcs, rm, r, genesis, nil
 }
