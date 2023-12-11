@@ -1,12 +1,15 @@
 FROM alpine:3.18
 
-EXPOSE 8444
+COPY zkevm-node /app/zkevm-node
 
-COPY cdk-data-availability /app/cdk-data-availability
+EXPOSE 8123
 
-RUN addgroup -S cdk-dac-group \
-    && adduser -S cdk-dac-user -G cdk-dac-group
+RUN addgroup -S zkevm-group \
+    && adduser -S zkevm-user -G zkevm-group
 
-USER cdk-dac-user
+RUN chown -R zkevm-user:zkevm-group /app
 
-CMD ["/app/cdk-data-availability"]
+USER zkevm-user
+
+CMD ["/app/zkevm-node"]
+

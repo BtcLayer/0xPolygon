@@ -2,8 +2,12 @@ package dataavailability
 
 import (
 	"context"
+	"math/big"
 
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
+	"github.com/0xPolygonHermez/zkevm-node/state"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgx/v4"
 )
 
 // DABackender is an interface for components that store and retrieve batch data
@@ -27,6 +31,15 @@ type SequenceRetriever interface {
 	GetSequence(ctx context.Context, batchHashes []common.Hash, dataAvailabilityMessage []byte) ([][]byte, error)
 }
 
+// === Internal interfaces ===
+
+type stateInterface interface {
+	GetBatchL2DataByNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) ([]byte, error)
+	GetBatchL2DataByNumbers(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error)
+	GetBatchByNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) (*state.Batch, error)
+	GetForcedBatchDataByNumbers(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error)
+}
+
 // BatchDataProvider is used to retrieve batch data
 type BatchDataProvider interface {
 	// GetBatchL2Data retrieve the data of a batch from the DA backend. The returned data must be the pre-image of the hash
@@ -37,4 +50,11 @@ type BatchDataProvider interface {
 type DataManager interface {
 	BatchDataProvider
 	SequenceSender
+}
+
+// ZKEVMClientTrustedBatchesGetter contains the methods required to interact with zkEVM-RPC
+type ZKEVMClientTrustedBatchesGetter interface {
+	BatchByNumber(ctx context.Context, number *big.Int) (*types.Batch, error)
+	BatchesByNumbers(ctx context.Context, numbers []*big.Int) ([]*types.BatchData, error)
+	ForcedBatchesByNumbers(ctx context.Context, numbers []*big.Int) ([]*types.BatchData, error)
 }

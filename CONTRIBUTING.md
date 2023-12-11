@@ -1,82 +1,43 @@
-We are really glad you're reading this, because we need volunteer developers to help this project come to fruition!✨Read our [Code of Conduct](./CODE_OF_CONDUCT.md) to keep our community approachable and respectable.
+# Pull Request guidelines
 
-In this guide you will get an overview of the contribution workflow from opening an issue, creating a PR, and merging the PR.
+This document addresses how we should create PRs, give and receive reviews. The motivation is to have better code, reduce the time from creation to merge while sharing knowledge and insights that help everyone becoming better developers.
 
-## Feature requests
+Note that non of this is a hard rule, but suggestions / guidelines. Although everyone is encouraged to stick to this points as much as possible. Use your common sense if some of this do not apply well on a particular PR
 
-If you find yourself wishing for a feature that doesn't exist in Chain Indexer Framework, you are probably not alone. There are bound to be others out there with similar needs. Many of the features that Chain Indexer Framework has today have been added because our users saw the need. Open an issue on our issues list on GitHub which describes the feature you would like to see, why you need it, and how it should work.
+## How to create a good PR
 
-### How to Get in Touch
+- Follow the template, unless for some reason it doesn't fit the content of the PR
+- Try hard on doing small PRs (> ~400 lines), in general is better to have 2 small PRs rather than a big one
+- Indicate clearly who should review it, ideally 2 team mates
+- Author of the PR is responsible for merging. Never do it until you have the approval of the specified reviewers unless you have their explicit permission
+- Introduce the purpose of the PR, for example: `Fixes the handle of ...`
+- Give brief context on why this is being done and link it to any relevant issue
+- Feel free to ask to specific team mates to review specific parts of the PR
 
-Our active Discord community is always ready to help and support new and experienced contributors alike. Link
+## How to do a good review
 
-## Contributing code and documentation changes
+- In general it's hard to set a quality threshold for changes. A good measure for when to approve is to accept changes once the overall quality of the code has been improved (compared to the code base before the PR)
+- Try hard to avoid taking things personally. For instance avoid using `I`, `you`, `I (don't) like`, ...
+- Ask, don’t tell. ("What about trying...?" rather than "Don’t do...")
+- Try to use positive language. You can even use emoji to clarify tone.
+- Be super clear on how confident you are when requesting changes. One way to do it is by starting the message like this:
+  - `Opinion: ...` this way you're indicating a some how personal preference to the PR author. It's great to share opinions that may not be based on evidence, The author should understand this as `if you agree with me, you could do this change`
+  - `Suggestion: ...` similar to opinion, but should have some back up / evidence / reasoning on why the suggestion is better than what done by the author. It should be read as `I think this could be done better this way, unless you have arguments to defend the original solution you should do it`
+  - `Request: ...` indicates that the PR won't be approved unless the request is applied. This should always include arguments that make obvious why the changes being requested are needed
+- Avoid doing code reviews for too consecutive time, try to don't do reviews for more than one hour non-stop
 
-If you would like to contribute a new feature or a bug fix to **Chain Indexer Framework**, please discuss your idea first on the GitHub issue. If there is no GitHub issue for your idea, please open one. It may be that somebody is already working on it, or that there are particular complexities that you should know about before starting the implementation. There are often a number of ways to fix a problem and it is important to find the right approach before spending time on a PR that cannot be merged.
+## How to receive feedback
 
-We add the `help wanted` label to existing GitHub issues for which community contributions are particularly welcome, and we use the `good first issue` label to mark issues that we think will be suitable for new contributors.
+- Accept that many programming decisions are opinions. Discuss tradeoffs, which you prefer, and reach a resolution quickly.
+- Ask for clarification if needed. ("I don’t understand, can you clarify?")
+- Offer clarification, explain the decisions you made to reach a solution in question.
+- Try to respond to every comment.
+- If there is growing confusion or debate, ask yourself if the written word is still the best form of communication. Talk (virtually) face-to-face, then mutually consider posting a follow-up to summarize any offline discussion (useful for others who be following along, now or later).
+- If consensus is still not reached, involve someone else in the discussion. As a last resource the lead of the project could take the decision
 
-### Fork and clone the repository
+## Links and credits
 
-You will need to fork the main **Chain Indexer Framework** code or documentation repository and clone it to your local machine. See [github help page](https://help.github.com/articles/fork-a-repo) for help.
+This guide is based on the following content:
 
-Further instructions for specific projects are given below.
-
-### Tips for code changes
-
-Following these tips prior to raising a pull request will speed up the review cycle.
-
-- Add appropriate unit tests
-- Add integration tests, if applicable
-- Lines that are not part of your change should not be edited (e.g. don't format unchanged lines, don't reorder existing imports)
-- Add the appropriate license headers to any new files
-
-### Submitting your changes
-
-Once your changes and tests are ready to submit for review:
-
-1. Test your changes
-
-   Run the test suite to make sure that nothing is broken. See the TESTING file for help running tests.
-
-2. Rebase your changes
-
-   Update your local repository with the most recent code from the main **Chain Indexer Framework** repository, and rebase your branch on top of the latest main branch. We prefer your initial changes to be squashed into a single commit. Later, if we ask you to make changes, add them as separate commits. This makes them easier to review. As a final step before merging we will either ask you to squash all commits yourself or we'll do it for you.
-
-3. Submit a pull request
-
-   Push your local changes to your forked copy of the repository and [submit a pull request](https://help.github.com/articles/using-pull-requests). In the pull request, choose a title which sums up the changes that you have made, and in the body provide more details about what your changes do. Also mention the number of the issue where discussion has taken place, eg "Closes #123".
-
-Then sit back and wait. There will probably be discussion about the pull request and, if any changes are needed, we would love to work with you to get your pull request merged into **Chain Indexer Framework**.
-
-Please adhere to the general guideline that you should never force push to a publicly shared branch. Once you have opened your pull request, you should consider your branch publicly shared. Instead of force pushing you can just add incremental commits; this is generally easier on your reviewers. If you need to pick up changes from main, you can merge main into your branch. A reviewer might ask you to rebase a long-running pull request in which case force pushing is okay for that request. Note that squashing at the end of the review process should also not be done, that can be done when the pull request is [integrated via GitHub](https://github.com/blog/2141-squash-your-commits).
-
-### Pull Requests for substantive changes (e.g. everything except comments and docs)
-
-1. Any PR that introduces a logic change should include tests. (In many cases, the tests will take more time to write than the actual code).
-2. All PRs should sit for 72 hours with the `pleasereview` tag in order to garner feedback.
-3. No PR should be merged until it has been reviewed, passes CI, and all reviews' comments are
-   addressed.
-4. PRs should:
-   1. have a narrow, well-defined focus.
-   2. make the smallest set of changes possible to achieve their goal.
-   3. include a clear description in the opening comment.
-   4. preserve the conventions and stylistic consistency of any files they modify.
-5. Given the choice between a conservative change that mostly works and an adventurous change which seems better but introduces uncertainty - prefer the conservative change.
-
-### Reviews
-
-The end goal of review is to suggest useful improvements to the author. Reviews should finish with approval unless there are issues that would result in:
-
-1. Buggy behaviour.
-2. Undue maintenance burden.
-3. Pessimisation (i.e. speed reduction / meaningful build-size increases).
-4. Feature reduction (i.e. it removes some aspect of functionality that users rely on).
-5. Avoidable risk (i.e it's difficult to test or hard to anticipate the implications of, without
-   being strictly necessary to fix something broken).
-
-Read more in [Review Guidelines](./REVIEW.md).
-
-### License
-
-By contributing to **Chain Indexer Framework**, you agree that your contributions will be licensed under its [license](./LICENSE).
+- https://smartbear.com/learn/code-review/best-practices-for-peer-code-review/
+- https://github.blog/2015-01-21-how-to-write-the-perfect-pull-request/

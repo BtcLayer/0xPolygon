@@ -4,46 +4,29 @@ on:
   pull_request:
     types: [opened, synchronize]  # Trigger on new PR and existing with new commits
     branches:
-      - main
+      - develop
 
 jobs:
   deploy_devnet:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout cdk-data-availability
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: cdk-data-availability
 
-      - name: Checkout kurtosis-cdk
-        uses: actions/checkout@v4
-        with:
-          repository: 0xPolygon/kurtosis-cdk
-          ref: main
-          path: kurtosis-cdk
-
-      - name: Install Kurtosis CDK tools
-        uses: ./kurtosis-cdk/.github/actions/setup-kurtosis-cdk
-
-      - name: Build docker image
-        working-directory: ./cdk-data-availability
-        run: docker build -t cdk-data-availability:local --file Dockerfile .
-
-      - name: Configure Kurtosis CDK
-        working-directory: ./kurtosis-cdk
+      - name: Build image (with proposed code changes) locally
+        id: build
         run: |
-          yq -Y --in-place '.args.data_availability_mode = "cdk-validium"' params.yml
-          yq -Y --in-place '.args.zkevm_da_image = "cdk-data-availability:local"' params.yml
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+              GITHUB_SHA_SHORT=$(jq -r .pull_request.head.sha "$GITHUB_EVENT_PATH" | cut -c 1-7)
+              echo $GITHUB_SHA_SHORT
+              echo "::set-output name=GITHUB_SHA_SHORT::$GITHUB_SHA_SHORT"
+          fi
 
-      - name: Deploy Kurtosis CDK package
-        working-directory: ./kurtosis-cdk
-        run: kurtosis run --enclave cdk-v1 --args-file params.yml --image-download always .
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
 
-      - name: Set executable permissions for the script
-        working-directory: ./cdk-data-availability
-        run: sudo chmod +x .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh
-
-      - name: Monitor verified batches
-        working-directory: ./cdk-data-availability
-        shell: bash
-        run: .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh 19 600
+      - name: Run regression tests against JIT container image
+        uses: 0xPolygon/kurtosis-cdk@v0.1.9
+        with:
+          zkevm_node: ${{ steps.build.outputs.GITHUB_SHA_SHORT }}

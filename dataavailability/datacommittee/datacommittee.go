@@ -11,8 +11,8 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/client"
 	daTypes "github.com/0xPolygon/cdk-data-availability/types"
-	"github.com/0xPolygonHermez/zkevm-sequence-sender/etherman/smartcontracts/polygondatacommittee"
-	"github.com/0xPolygonHermez/zkevm-sequence-sender/log"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygondatacommittee"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -88,8 +88,8 @@ func (d *DataCommitteeBackend) Init() error {
 }
 
 // GetSequence gets backend data one hash at a time. This should be optimized on the DAC side to get them all at once.
-func (d *DataCommitteeBackend) GetSequence(_ context.Context, hashes []common.Hash, _ []byte) ([][]byte, error) {
-	// TODO: optimize this on the DAC side by implementing a multi batch retrieve api)
+func (d *DataCommitteeBackend) GetSequence(ctx context.Context, hashes []common.Hash, dataAvailabilityMessage []byte) ([][]byte, error) {
+	// TODO: optimize this on the DAC side by implementing a multi batch retrieve api
 	var batchData [][]byte
 	for _, h := range hashes {
 		data, err := d.GetBatchL2Data(h)
@@ -159,10 +159,10 @@ func (s *DataCommitteeBackend) PostSequence(ctx context.Context, batchesData [][
 		return nil, err
 	}
 
-	// Authenticate as trusted sequencer by signing the sequence
-	sequence := make(daTypes.Sequence, 0, len(batchesData))
-	for _, batchData := range batchesData {
-		sequence = append(sequence, batchData)
+	// Authenticate as trusted sequencer by signing the sequences
+	sequence := daTypes.Sequence{}
+	for _, seq := range batchesData {
+		sequence = append(sequence, seq)
 	}
 	signedSequence, err := sequence.Sign(s.privKey)
 	if err != nil {
@@ -177,8 +177,8 @@ func (s *DataCommitteeBackend) PostSequence(ctx context.Context, batchesData [][
 	}
 
 	// Collect signatures
+	msgs := []signatureMsg{}
 	var (
-		msgs                = make(signatureMsgs, 0, len(committee.Members))
 		collectedSignatures uint64
 		failedToCollect     uint64
 	)
@@ -201,16 +201,10 @@ func (s *DataCommitteeBackend) PostSequence(ctx context.Context, batchesData [][
 	// Stop requesting as soon as we have N valid signatures
 	cancelSignatureCollection()
 
-	return buildSignaturesAndAddrs(msgs, committee.Members), nil
+	return buildSignaturesAndAddrs(signatureMsgs(msgs), committee.Members), nil
 }
 
 func requestSignatureFromMember(ctx context.Context, signedSequence daTypes.SignedSequence, member DataCommitteeMember, ch chan signatureMsg) {
-	select {
-	case <-ctx.Done():
-		return
-	default:
-	}
-
 	// request
 	c := client.New(member.URL)
 	log.Infof("sending request to sign the sequence to %s at %s", member.Addr.Hex(), member.URL)
@@ -247,9 +241,10 @@ func requestSignatureFromMember(ctx context.Context, signedSequence daTypes.Sign
 
 func buildSignaturesAndAddrs(sigs signatureMsgs, members []DataCommitteeMember) []byte {
 	const (
-		sigLen = 65
+		sigLen  = 65
+		addrLen = 20
 	)
-	res := make([]byte, 0, len(sigs)*sigLen+len(members)*common.AddressLength)
+	res := make([]byte, 0, len(sigs)*sigLen+len(members)*addrLen)
 	sort.Sort(sigs)
 	for _, msg := range sigs {
 		log.Debugf("adding signature %s from %s", common.Bytes2Hex(msg.signature), msg.addr.Hex())

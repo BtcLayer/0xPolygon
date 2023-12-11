@@ -4,11 +4,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/0xPolygonHermez/zkevm-sequence-sender/etherman/smartcontracts/polygondatacommittee"
-	"github.com/0xPolygonHermez/zkevm-sequence-sender/log"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygondatacommittee"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/stretchr/testify/assert"
@@ -99,7 +99,7 @@ func newSimulatedDacman(t *testing.T, auth *bind.TransactOpts) (
 	// 10000000 ETH in wei
 	balance, _ := new(big.Int).SetString("10000000000000000000000000", 10) //nolint:gomnd
 	address := auth.From
-	genesisAlloc := map[common.Address]types.Account{
+	genesisAlloc := map[common.Address]core.GenesisAccount{
 		address: {
 			Balance: balance,
 		},
