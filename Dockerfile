@@ -1,19 +1,31 @@
-# CONTAINER FOR BUILDING BINARY
-FROM golang:1.21 AS build
+FROM golang:1.21 AS builder
+WORKDIR /workspace
+COPY go.mod go.sum ./
+RUN go mod download
 
-# INSTALL DEPENDENCIES
-RUN go install github.com/gobuffalo/packr/v2/packr2@v2.8.3
-COPY go.mod go.sum /src/
-RUN cd /src && go mod download
+COPY abi/ abi/
+COPY bindings/ bindings/
+COPY cmd/ cmd/
+COPY dashboard/ dashboard/
+COPY gethkeystore/ gethkeystore/
+COPY hdwallet/ hdwallet/
+COPY metrics/ metrics/
+COPY p2p/ p2p/
+COPY proto/ proto/
+COPY rpctypes/ rpctypes/
+COPY util/ util/
+COPY main.go ./
+RUN CGO_ENABLED=0 go build -o polycli main.go
 
-# BUILD BINARY
-COPY . /src
-RUN cd /src/db && packr2
-RUN cd /src && make build
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /workspace/polycli /usr/bin/polycli
+USER 65532:65532
+ENTRYPOINT ["polycli"]
+CMD ["--help"]
 
-# CONTAINER FOR RUNNING BINARY
-FROM alpine:3.18
-COPY --from=build /src/dist/zkevm-node /app/zkevm-node
-RUN apk update && apk add postgresql15-client
-EXPOSE 8123
-CMD ["/bin/sh", "-c", "/app/zkevm-node run"]
+# How to test this image?
+# https://github.com/maticnetwork/polygon-cli/pull/189#discussion_r1464486344
