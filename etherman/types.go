@@ -1,104 +1,102 @@
 package etherman
 
 import (
+	"math/big"
 	"time"
 
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/etrogpolygonzkevm"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/preetrogpolygonzkevm"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // Block struct
 type Block struct {
-	BlockNumber           uint64
-	BlockHash             common.Hash
-	ParentHash            common.Hash
-	ForcedBatches         []ForcedBatch
-	SequencedBatches      [][]SequencedBatch
-	UpdateEtrogSequence   UpdateEtrogSequence
-	VerifiedBatches       []VerifiedBatch
-	SequencedForceBatches [][]SequencedForceBatch
-	ForkIDs               []ForkID
-	SequenceBlobs         []SequenceBlobs
-	ReceivedAt            time.Time
-	// GER data
-	GlobalExitRoots, L1InfoTree []GlobalExitRoot
+	ID              uint64
+	BlockNumber     uint64
+	BlockHash       common.Hash
+	ParentHash      common.Hash
+	NetworkID       uint
+	GlobalExitRoots []GlobalExitRoot
+	Deposits        []Deposit
+	Claims          []Claim
+	Tokens          []TokenWrapped
+	VerifiedBatches []VerifiedBatch
+	ActivateEtrog   []bool
+	ReceivedAt      time.Time
 }
 
 // GlobalExitRoot struct
 type GlobalExitRoot struct {
-	BlockNumber       uint64
-	MainnetExitRoot   common.Hash
-	RollupExitRoot    common.Hash
-	GlobalExitRoot    common.Hash
-	Timestamp         time.Time
-	PreviousBlockHash common.Hash
+	BlockID        uint64
+	BlockNumber    uint64
+	ExitRoots      []common.Hash
+	GlobalExitRoot common.Hash
 }
 
-// SequencedBatchElderberryData represents an Elderberry sequenced batch data
-type SequencedBatchElderberryData struct {
-	MaxSequenceTimestamp     uint64
-	InitSequencedBatchNumber uint64 // Last sequenced batch number
+// Deposit struct
+type Deposit struct {
+	LeafType           uint8
+	OriginalNetwork    uint
+	OriginalAddress    common.Address
+	Amount             *big.Int
+	DestinationNetwork uint
+	DestinationAddress common.Address
+	DepositCount       uint
+	BlockID            uint64
+	BlockNumber        uint64
+	NetworkID          uint
+	TxHash             common.Hash
+	Metadata           []byte
+	// it is only used for the bridge service
+	ReadyForClaim bool
 }
 
-// SequencedBatch represents virtual batch
-type SequencedBatch struct {
-	BatchNumber   uint64
-	L1InfoRoot    *common.Hash
-	SequencerAddr common.Address
-	TxHash        common.Hash
-	Nonce         uint64
-	Coinbase      common.Address
-	// Struct used in preEtrog forks
-	*preetrogpolygonzkevm.PolygonZkEVMBatchData
-	// Struct used in Etrog
-	*etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData
-	// Struct used in Elderberry
-	*SequencedBatchElderberryData
+// Claim struct
+type Claim struct {
+	MainnetFlag        bool
+	RollupIndex        uint64
+	Index              uint
+	OriginalNetwork    uint
+	OriginalAddress    common.Address
+	Amount             *big.Int
+	DestinationAddress common.Address
+	BlockID            uint64
+	BlockNumber        uint64
+	NetworkID          uint
+	TxHash             common.Hash
 }
 
-// UpdateEtrogSequence represents the first etrog sequence
-type UpdateEtrogSequence struct {
-	BatchNumber   uint64
-	SequencerAddr common.Address
-	TxHash        common.Hash
-	Nonce         uint64
-	// Struct used in Etrog
-	*etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData
+// TokenWrapped struct
+type TokenWrapped struct {
+	TokenMetadata
+	OriginalNetwork      uint
+	OriginalTokenAddress common.Address
+	WrappedTokenAddress  common.Address
+	BlockID              uint64
+	BlockNumber          uint64
+	NetworkID            uint
 }
 
-// ForcedBatch represents a ForcedBatch
-type ForcedBatch struct {
-	BlockNumber       uint64
-	ForcedBatchNumber uint64
-	Sequencer         common.Address
-	GlobalExitRoot    common.Hash
-	RawTxsData        []byte
-	ForcedAt          time.Time
+// TokenMetadata is a metadata of ERC20 token.
+type TokenMetadata struct {
+	Name     string
+	Symbol   string
+	Decimals uint8
 }
 
-// VerifiedBatch represents a VerifiedBatch
 type VerifiedBatch struct {
-	BlockNumber uint64
-	BatchNumber uint64
-	Aggregator  common.Address
-	StateRoot   common.Hash
-	TxHash      common.Hash
+	BlockNumber   uint64
+	BatchNumber   uint64
+	RollupID      uint
+	LocalExitRoot common.Hash
+	TxHash        common.Hash
+	StateRoot     common.Hash
+	Aggregator    common.Address
 }
 
-// SequencedForceBatch is a sturct to track the ForceSequencedBatches event.
-type SequencedForceBatch struct {
-	BatchNumber uint64
-	Coinbase    common.Address
-	TxHash      common.Hash
-	Timestamp   time.Time
-	Nonce       uint64
-	etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData
-}
-
-// ForkID is a sturct to track the ForkID event.
-type ForkID struct {
-	BatchNumber uint64
-	ForkID      uint64
-	Version     string
+// RollupExitLeaf struct
+type RollupExitLeaf struct {
+	ID       uint64
+	BlockID  uint64
+	Leaf     common.Hash
+	RollupId uint
+	Root     common.Hash
 }
