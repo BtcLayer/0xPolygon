@@ -82,6 +82,150 @@ func (_c *StorageMock_AddAccumulatedInputHash_Call) RunAndReturn(run func(contex
 	return _c
 }
 
+// AddBatchProof provides a mock function with given fields: ctx, proof, dbTx
+func (_m *StorageMock) AddBatchProof(ctx context.Context, proof *state.Proof, dbTx pgx.Tx) error {
+	ret := _m.Called(ctx, proof, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBatchProof")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *state.Proof, pgx.Tx) error); ok {
+		r0 = rf(ctx, proof, dbTx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// StorageMock_AddBatchProof_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddBatchProof'
+type StorageMock_AddBatchProof_Call struct {
+	*mock.Call
+}
+
+// AddBatchProof is a helper method to define mock.On call
+//   - ctx context.Context
+//   - proof *state.Proof
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) AddBatchProof(ctx interface{}, proof interface{}, dbTx interface{}) *StorageMock_AddBatchProof_Call {
+	return &StorageMock_AddBatchProof_Call{Call: _e.mock.On("AddBatchProof", ctx, proof, dbTx)}
+}
+
+func (_c *StorageMock_AddBatchProof_Call) Run(run func(ctx context.Context, proof *state.Proof, dbTx pgx.Tx)) *StorageMock_AddBatchProof_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*state.Proof), args[2].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_AddBatchProof_Call) Return(_a0 error) *StorageMock_AddBatchProof_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StorageMock_AddBatchProof_Call) RunAndReturn(run func(context.Context, *state.Proof, pgx.Tx) error) *StorageMock_AddBatchProof_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddBlobInner provides a mock function with given fields: ctx, blobInner, dbTx
+func (_m *StorageMock) AddBlobInner(ctx context.Context, blobInner *state.BlobInner, dbTx pgx.Tx) error {
+	ret := _m.Called(ctx, blobInner, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBlobInner")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *state.BlobInner, pgx.Tx) error); ok {
+		r0 = rf(ctx, blobInner, dbTx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// StorageMock_AddBlobInner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddBlobInner'
+type StorageMock_AddBlobInner_Call struct {
+	*mock.Call
+}
+
+// AddBlobInner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - blobInner *state.BlobInner
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) AddBlobInner(ctx interface{}, blobInner interface{}, dbTx interface{}) *StorageMock_AddBlobInner_Call {
+	return &StorageMock_AddBlobInner_Call{Call: _e.mock.On("AddBlobInner", ctx, blobInner, dbTx)}
+}
+
+func (_c *StorageMock_AddBlobInner_Call) Run(run func(ctx context.Context, blobInner *state.BlobInner, dbTx pgx.Tx)) *StorageMock_AddBlobInner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*state.BlobInner), args[2].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_AddBlobInner_Call) Return(_a0 error) *StorageMock_AddBlobInner_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StorageMock_AddBlobInner_Call) RunAndReturn(run func(context.Context, *state.BlobInner, pgx.Tx) error) *StorageMock_AddBlobInner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddBlobSequence provides a mock function with given fields: ctx, blobSequence, dbTx
+func (_m *StorageMock) AddBlobSequence(ctx context.Context, blobSequence *state.BlobSequence, dbTx pgx.Tx) error {
+	ret := _m.Called(ctx, blobSequence, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBlobSequence")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *state.BlobSequence, pgx.Tx) error); ok {
+		r0 = rf(ctx, blobSequence, dbTx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// StorageMock_AddBlobSequence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddBlobSequence'
+type StorageMock_AddBlobSequence_Call struct {
+	*mock.Call
+}
+
+// AddBlobSequence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - blobSequence *state.BlobSequence
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) AddBlobSequence(ctx interface{}, blobSequence interface{}, dbTx interface{}) *StorageMock_AddBlobSequence_Call {
+	return &StorageMock_AddBlobSequence_Call{Call: _e.mock.On("AddBlobSequence", ctx, blobSequence, dbTx)}
+}
+
+func (_c *StorageMock_AddBlobSequence_Call) Run(run func(ctx context.Context, blobSequence *state.BlobSequence, dbTx pgx.Tx)) *StorageMock_AddBlobSequence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*state.BlobSequence), args[2].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_AddBlobSequence_Call) Return(_a0 error) *StorageMock_AddBlobSequence_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StorageMock_AddBlobSequence_Call) RunAndReturn(run func(context.Context, *state.BlobSequence, pgx.Tx) error) *StorageMock_AddBlobSequence_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddBlock provides a mock function with given fields: ctx, block, dbTx
 func (_m *StorageMock) AddBlock(ctx context.Context, block *state.Block, dbTx pgx.Tx) error {
 	ret := _m.Called(ctx, block, dbTx)
@@ -274,54 +418,6 @@ func (_c *StorageMock_AddForkIDInterval_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
-// AddGeneratedProof provides a mock function with given fields: ctx, proof, dbTx
-func (_m *StorageMock) AddGeneratedProof(ctx context.Context, proof *state.Proof, dbTx pgx.Tx) error {
-	ret := _m.Called(ctx, proof, dbTx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddGeneratedProof")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *state.Proof, pgx.Tx) error); ok {
-		r0 = rf(ctx, proof, dbTx)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// StorageMock_AddGeneratedProof_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddGeneratedProof'
-type StorageMock_AddGeneratedProof_Call struct {
-	*mock.Call
-}
-
-// AddGeneratedProof is a helper method to define mock.On call
-//   - ctx context.Context
-//   - proof *state.Proof
-//   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) AddGeneratedProof(ctx interface{}, proof interface{}, dbTx interface{}) *StorageMock_AddGeneratedProof_Call {
-	return &StorageMock_AddGeneratedProof_Call{Call: _e.mock.On("AddGeneratedProof", ctx, proof, dbTx)}
-}
-
-func (_c *StorageMock_AddGeneratedProof_Call) Run(run func(ctx context.Context, proof *state.Proof, dbTx pgx.Tx)) *StorageMock_AddGeneratedProof_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*state.Proof), args[2].(pgx.Tx))
-	})
-	return _c
-}
-
-func (_c *StorageMock_AddGeneratedProof_Call) Return(_a0 error) *StorageMock_AddGeneratedProof_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *StorageMock_AddGeneratedProof_Call) RunAndReturn(run func(context.Context, *state.Proof, pgx.Tx) error) *StorageMock_AddGeneratedProof_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // AddGlobalExitRoot provides a mock function with given fields: ctx, exitRoot, dbTx
 func (_m *StorageMock) AddGlobalExitRoot(ctx context.Context, exitRoot *state.GlobalExitRoot, dbTx pgx.Tx) error {
 	ret := _m.Called(ctx, exitRoot, dbTx)
@@ -414,6 +510,54 @@ func (_c *StorageMock_AddL1InfoRootToExitRoot_Call) Return(_a0 error) *StorageMo
 }
 
 func (_c *StorageMock_AddL1InfoRootToExitRoot_Call) RunAndReturn(run func(context.Context, *state.L1InfoTreeExitRootStorageEntry, pgx.Tx) error) *StorageMock_AddL1InfoRootToExitRoot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddL1InfoTreeRecursiveRootToExitRoot provides a mock function with given fields: ctx, exitRoot, dbTx
+func (_m *StorageMock) AddL1InfoTreeRecursiveRootToExitRoot(ctx context.Context, exitRoot *state.L1InfoTreeRecursiveExitRootStorageEntry, dbTx pgx.Tx) error {
+	ret := _m.Called(ctx, exitRoot, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddL1InfoTreeRecursiveRootToExitRoot")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *state.L1InfoTreeRecursiveExitRootStorageEntry, pgx.Tx) error); ok {
+		r0 = rf(ctx, exitRoot, dbTx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddL1InfoTreeRecursiveRootToExitRoot'
+type StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call struct {
+	*mock.Call
+}
+
+// AddL1InfoTreeRecursiveRootToExitRoot is a helper method to define mock.On call
+//   - ctx context.Context
+//   - exitRoot *state.L1InfoTreeRecursiveExitRootStorageEntry
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) AddL1InfoTreeRecursiveRootToExitRoot(ctx interface{}, exitRoot interface{}, dbTx interface{}) *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call {
+	return &StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call{Call: _e.mock.On("AddL1InfoTreeRecursiveRootToExitRoot", ctx, exitRoot, dbTx)}
+}
+
+func (_c *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call) Run(run func(ctx context.Context, exitRoot *state.L1InfoTreeRecursiveExitRootStorageEntry, dbTx pgx.Tx)) *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*state.L1InfoTreeRecursiveExitRootStorageEntry), args[2].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call) Return(_a0 error) *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call) RunAndReturn(run func(context.Context, *state.L1InfoTreeRecursiveExitRootStorageEntry, pgx.Tx) error) *StorageMock_AddL1InfoTreeRecursiveRootToExitRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -876,55 +1020,6 @@ func (_c *StorageMock_Begin_Call) RunAndReturn(run func(context.Context) (pgx.Tx
 	return _c
 }
 
-// BuildChangeL2Block provides a mock function with given fields: deltaTimestamp, l1InfoTreeIndex
-func (_m *StorageMock) BuildChangeL2Block(deltaTimestamp uint32, l1InfoTreeIndex uint32) []byte {
-	ret := _m.Called(deltaTimestamp, l1InfoTreeIndex)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BuildChangeL2Block")
-	}
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(uint32, uint32) []byte); ok {
-		r0 = rf(deltaTimestamp, l1InfoTreeIndex)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	return r0
-}
-
-// StorageMock_BuildChangeL2Block_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BuildChangeL2Block'
-type StorageMock_BuildChangeL2Block_Call struct {
-	*mock.Call
-}
-
-// BuildChangeL2Block is a helper method to define mock.On call
-//   - deltaTimestamp uint32
-//   - l1InfoTreeIndex uint32
-func (_e *StorageMock_Expecter) BuildChangeL2Block(deltaTimestamp interface{}, l1InfoTreeIndex interface{}) *StorageMock_BuildChangeL2Block_Call {
-	return &StorageMock_BuildChangeL2Block_Call{Call: _e.mock.On("BuildChangeL2Block", deltaTimestamp, l1InfoTreeIndex)}
-}
-
-func (_c *StorageMock_BuildChangeL2Block_Call) Run(run func(deltaTimestamp uint32, l1InfoTreeIndex uint32)) *StorageMock_BuildChangeL2Block_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(uint32), args[1].(uint32))
-	})
-	return _c
-}
-
-func (_c *StorageMock_BuildChangeL2Block_Call) Return(_a0 []byte) *StorageMock_BuildChangeL2Block_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *StorageMock_BuildChangeL2Block_Call) RunAndReturn(run func(uint32, uint32) []byte) *StorageMock_BuildChangeL2Block_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CheckProofContainsCompleteSequences provides a mock function with given fields: ctx, proof, dbTx
 func (_m *StorageMock) CheckProofContainsCompleteSequences(ctx context.Context, proof *state.Proof, dbTx pgx.Tx) (bool, error) {
 	ret := _m.Called(ctx, proof, dbTx)
@@ -983,12 +1078,12 @@ func (_c *StorageMock_CheckProofContainsCompleteSequences_Call) RunAndReturn(run
 	return _c
 }
 
-// CleanupGeneratedProofs provides a mock function with given fields: ctx, batchNumber, dbTx
-func (_m *StorageMock) CleanupGeneratedProofs(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) error {
+// CleanupBatchProofs provides a mock function with given fields: ctx, batchNumber, dbTx
+func (_m *StorageMock) CleanupBatchProofs(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) error {
 	ret := _m.Called(ctx, batchNumber, dbTx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CleanupGeneratedProofs")
+		panic("no return value specified for CleanupBatchProofs")
 	}
 
 	var r0 error
@@ -1001,42 +1096,42 @@ func (_m *StorageMock) CleanupGeneratedProofs(ctx context.Context, batchNumber u
 	return r0
 }
 
-// StorageMock_CleanupGeneratedProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanupGeneratedProofs'
-type StorageMock_CleanupGeneratedProofs_Call struct {
+// StorageMock_CleanupBatchProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanupBatchProofs'
+type StorageMock_CleanupBatchProofs_Call struct {
 	*mock.Call
 }
 
-// CleanupGeneratedProofs is a helper method to define mock.On call
+// CleanupBatchProofs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - batchNumber uint64
 //   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) CleanupGeneratedProofs(ctx interface{}, batchNumber interface{}, dbTx interface{}) *StorageMock_CleanupGeneratedProofs_Call {
-	return &StorageMock_CleanupGeneratedProofs_Call{Call: _e.mock.On("CleanupGeneratedProofs", ctx, batchNumber, dbTx)}
+func (_e *StorageMock_Expecter) CleanupBatchProofs(ctx interface{}, batchNumber interface{}, dbTx interface{}) *StorageMock_CleanupBatchProofs_Call {
+	return &StorageMock_CleanupBatchProofs_Call{Call: _e.mock.On("CleanupBatchProofs", ctx, batchNumber, dbTx)}
 }
 
-func (_c *StorageMock_CleanupGeneratedProofs_Call) Run(run func(ctx context.Context, batchNumber uint64, dbTx pgx.Tx)) *StorageMock_CleanupGeneratedProofs_Call {
+func (_c *StorageMock_CleanupBatchProofs_Call) Run(run func(ctx context.Context, batchNumber uint64, dbTx pgx.Tx)) *StorageMock_CleanupBatchProofs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uint64), args[2].(pgx.Tx))
 	})
 	return _c
 }
 
-func (_c *StorageMock_CleanupGeneratedProofs_Call) Return(_a0 error) *StorageMock_CleanupGeneratedProofs_Call {
+func (_c *StorageMock_CleanupBatchProofs_Call) Return(_a0 error) *StorageMock_CleanupBatchProofs_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *StorageMock_CleanupGeneratedProofs_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) error) *StorageMock_CleanupGeneratedProofs_Call {
+func (_c *StorageMock_CleanupBatchProofs_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) error) *StorageMock_CleanupBatchProofs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CleanupLockedProofs provides a mock function with given fields: ctx, duration, dbTx
-func (_m *StorageMock) CleanupLockedProofs(ctx context.Context, duration string, dbTx pgx.Tx) (int64, error) {
+// CleanupLockedBatchProofs provides a mock function with given fields: ctx, duration, dbTx
+func (_m *StorageMock) CleanupLockedBatchProofs(ctx context.Context, duration string, dbTx pgx.Tx) (int64, error) {
 	ret := _m.Called(ctx, duration, dbTx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CleanupLockedProofs")
+		panic("no return value specified for CleanupLockedBatchProofs")
 	}
 
 	var r0 int64
@@ -1059,32 +1154,32 @@ func (_m *StorageMock) CleanupLockedProofs(ctx context.Context, duration string,
 	return r0, r1
 }
 
-// StorageMock_CleanupLockedProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanupLockedProofs'
-type StorageMock_CleanupLockedProofs_Call struct {
+// StorageMock_CleanupLockedBatchProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanupLockedBatchProofs'
+type StorageMock_CleanupLockedBatchProofs_Call struct {
 	*mock.Call
 }
 
-// CleanupLockedProofs is a helper method to define mock.On call
+// CleanupLockedBatchProofs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - duration string
 //   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) CleanupLockedProofs(ctx interface{}, duration interface{}, dbTx interface{}) *StorageMock_CleanupLockedProofs_Call {
-	return &StorageMock_CleanupLockedProofs_Call{Call: _e.mock.On("CleanupLockedProofs", ctx, duration, dbTx)}
+func (_e *StorageMock_Expecter) CleanupLockedBatchProofs(ctx interface{}, duration interface{}, dbTx interface{}) *StorageMock_CleanupLockedBatchProofs_Call {
+	return &StorageMock_CleanupLockedBatchProofs_Call{Call: _e.mock.On("CleanupLockedBatchProofs", ctx, duration, dbTx)}
 }
 
-func (_c *StorageMock_CleanupLockedProofs_Call) Run(run func(ctx context.Context, duration string, dbTx pgx.Tx)) *StorageMock_CleanupLockedProofs_Call {
+func (_c *StorageMock_CleanupLockedBatchProofs_Call) Run(run func(ctx context.Context, duration string, dbTx pgx.Tx)) *StorageMock_CleanupLockedBatchProofs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(pgx.Tx))
 	})
 	return _c
 }
 
-func (_c *StorageMock_CleanupLockedProofs_Call) Return(_a0 int64, _a1 error) *StorageMock_CleanupLockedProofs_Call {
+func (_c *StorageMock_CleanupLockedBatchProofs_Call) Return(_a0 int64, _a1 error) *StorageMock_CleanupLockedBatchProofs_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *StorageMock_CleanupLockedProofs_Call) RunAndReturn(run func(context.Context, string, pgx.Tx) (int64, error)) *StorageMock_CleanupLockedProofs_Call {
+func (_c *StorageMock_CleanupLockedBatchProofs_Call) RunAndReturn(run func(context.Context, string, pgx.Tx) (int64, error)) *StorageMock_CleanupLockedBatchProofs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1242,12 +1337,12 @@ func (_c *StorageMock_CountReorgs_Call) RunAndReturn(run func(context.Context, p
 	return _c
 }
 
-// DeleteGeneratedProofs provides a mock function with given fields: ctx, batchNumber, batchNumberFinal, dbTx
-func (_m *StorageMock) DeleteGeneratedProofs(ctx context.Context, batchNumber uint64, batchNumberFinal uint64, dbTx pgx.Tx) error {
+// DeleteBatchProofs provides a mock function with given fields: ctx, batchNumber, batchNumberFinal, dbTx
+func (_m *StorageMock) DeleteBatchProofs(ctx context.Context, batchNumber uint64, batchNumberFinal uint64, dbTx pgx.Tx) error {
 	ret := _m.Called(ctx, batchNumber, batchNumberFinal, dbTx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteGeneratedProofs")
+		panic("no return value specified for DeleteBatchProofs")
 	}
 
 	var r0 error
@@ -1260,43 +1355,43 @@ func (_m *StorageMock) DeleteGeneratedProofs(ctx context.Context, batchNumber ui
 	return r0
 }
 
-// StorageMock_DeleteGeneratedProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteGeneratedProofs'
-type StorageMock_DeleteGeneratedProofs_Call struct {
+// StorageMock_DeleteBatchProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteBatchProofs'
+type StorageMock_DeleteBatchProofs_Call struct {
 	*mock.Call
 }
 
-// DeleteGeneratedProofs is a helper method to define mock.On call
+// DeleteBatchProofs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - batchNumber uint64
 //   - batchNumberFinal uint64
 //   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) DeleteGeneratedProofs(ctx interface{}, batchNumber interface{}, batchNumberFinal interface{}, dbTx interface{}) *StorageMock_DeleteGeneratedProofs_Call {
-	return &StorageMock_DeleteGeneratedProofs_Call{Call: _e.mock.On("DeleteGeneratedProofs", ctx, batchNumber, batchNumberFinal, dbTx)}
+func (_e *StorageMock_Expecter) DeleteBatchProofs(ctx interface{}, batchNumber interface{}, batchNumberFinal interface{}, dbTx interface{}) *StorageMock_DeleteBatchProofs_Call {
+	return &StorageMock_DeleteBatchProofs_Call{Call: _e.mock.On("DeleteBatchProofs", ctx, batchNumber, batchNumberFinal, dbTx)}
 }
 
-func (_c *StorageMock_DeleteGeneratedProofs_Call) Run(run func(ctx context.Context, batchNumber uint64, batchNumberFinal uint64, dbTx pgx.Tx)) *StorageMock_DeleteGeneratedProofs_Call {
+func (_c *StorageMock_DeleteBatchProofs_Call) Run(run func(ctx context.Context, batchNumber uint64, batchNumberFinal uint64, dbTx pgx.Tx)) *StorageMock_DeleteBatchProofs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uint64), args[2].(uint64), args[3].(pgx.Tx))
 	})
 	return _c
 }
 
-func (_c *StorageMock_DeleteGeneratedProofs_Call) Return(_a0 error) *StorageMock_DeleteGeneratedProofs_Call {
+func (_c *StorageMock_DeleteBatchProofs_Call) Return(_a0 error) *StorageMock_DeleteBatchProofs_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *StorageMock_DeleteGeneratedProofs_Call) RunAndReturn(run func(context.Context, uint64, uint64, pgx.Tx) error) *StorageMock_DeleteGeneratedProofs_Call {
+func (_c *StorageMock_DeleteBatchProofs_Call) RunAndReturn(run func(context.Context, uint64, uint64, pgx.Tx) error) *StorageMock_DeleteBatchProofs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteUngeneratedProofs provides a mock function with given fields: ctx, dbTx
-func (_m *StorageMock) DeleteUngeneratedProofs(ctx context.Context, dbTx pgx.Tx) error {
+// DeleteUngeneratedBatchProofs provides a mock function with given fields: ctx, dbTx
+func (_m *StorageMock) DeleteUngeneratedBatchProofs(ctx context.Context, dbTx pgx.Tx) error {
 	ret := _m.Called(ctx, dbTx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteUngeneratedProofs")
+		panic("no return value specified for DeleteUngeneratedBatchProofs")
 	}
 
 	var r0 error
@@ -1309,31 +1404,31 @@ func (_m *StorageMock) DeleteUngeneratedProofs(ctx context.Context, dbTx pgx.Tx)
 	return r0
 }
 
-// StorageMock_DeleteUngeneratedProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUngeneratedProofs'
-type StorageMock_DeleteUngeneratedProofs_Call struct {
+// StorageMock_DeleteUngeneratedBatchProofs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUngeneratedBatchProofs'
+type StorageMock_DeleteUngeneratedBatchProofs_Call struct {
 	*mock.Call
 }
 
-// DeleteUngeneratedProofs is a helper method to define mock.On call
+// DeleteUngeneratedBatchProofs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) DeleteUngeneratedProofs(ctx interface{}, dbTx interface{}) *StorageMock_DeleteUngeneratedProofs_Call {
-	return &StorageMock_DeleteUngeneratedProofs_Call{Call: _e.mock.On("DeleteUngeneratedProofs", ctx, dbTx)}
+func (_e *StorageMock_Expecter) DeleteUngeneratedBatchProofs(ctx interface{}, dbTx interface{}) *StorageMock_DeleteUngeneratedBatchProofs_Call {
+	return &StorageMock_DeleteUngeneratedBatchProofs_Call{Call: _e.mock.On("DeleteUngeneratedBatchProofs", ctx, dbTx)}
 }
 
-func (_c *StorageMock_DeleteUngeneratedProofs_Call) Run(run func(ctx context.Context, dbTx pgx.Tx)) *StorageMock_DeleteUngeneratedProofs_Call {
+func (_c *StorageMock_DeleteUngeneratedBatchProofs_Call) Run(run func(ctx context.Context, dbTx pgx.Tx)) *StorageMock_DeleteUngeneratedBatchProofs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(pgx.Tx))
 	})
 	return _c
 }
 
-func (_c *StorageMock_DeleteUngeneratedProofs_Call) Return(_a0 error) *StorageMock_DeleteUngeneratedProofs_Call {
+func (_c *StorageMock_DeleteUngeneratedBatchProofs_Call) Return(_a0 error) *StorageMock_DeleteUngeneratedBatchProofs_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *StorageMock_DeleteUngeneratedProofs_Call) RunAndReturn(run func(context.Context, pgx.Tx) error) *StorageMock_DeleteUngeneratedProofs_Call {
+func (_c *StorageMock_DeleteUngeneratedBatchProofs_Call) RunAndReturn(run func(context.Context, pgx.Tx) error) *StorageMock_DeleteUngeneratedBatchProofs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1463,6 +1558,65 @@ func (_c *StorageMock_GetAllL1InfoRootEntries_Call) Return(_a0 []state.L1InfoTre
 }
 
 func (_c *StorageMock_GetAllL1InfoRootEntries_Call) RunAndReturn(run func(context.Context, pgx.Tx) ([]state.L1InfoTreeExitRootStorageEntry, error)) *StorageMock_GetAllL1InfoRootEntries_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAllL1InfoTreeRecursiveRootEntries provides a mock function with given fields: ctx, dbTx
+func (_m *StorageMock) GetAllL1InfoTreeRecursiveRootEntries(ctx context.Context, dbTx pgx.Tx) ([]state.L1InfoTreeRecursiveExitRootStorageEntry, error) {
+	ret := _m.Called(ctx, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllL1InfoTreeRecursiveRootEntries")
+	}
+
+	var r0 []state.L1InfoTreeRecursiveExitRootStorageEntry
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) ([]state.L1InfoTreeRecursiveExitRootStorageEntry, error)); ok {
+		return rf(ctx, dbTx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) []state.L1InfoTreeRecursiveExitRootStorageEntry); ok {
+		r0 = rf(ctx, dbTx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]state.L1InfoTreeRecursiveExitRootStorageEntry)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, pgx.Tx) error); ok {
+		r1 = rf(ctx, dbTx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllL1InfoTreeRecursiveRootEntries'
+type StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call struct {
+	*mock.Call
+}
+
+// GetAllL1InfoTreeRecursiveRootEntries is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) GetAllL1InfoTreeRecursiveRootEntries(ctx interface{}, dbTx interface{}) *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call {
+	return &StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call{Call: _e.mock.On("GetAllL1InfoTreeRecursiveRootEntries", ctx, dbTx)}
+}
+
+func (_c *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call) Run(run func(ctx context.Context, dbTx pgx.Tx)) *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call) Return(_a0 []state.L1InfoTreeRecursiveExitRootStorageEntry, _a1 error) *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call) RunAndReturn(run func(context.Context, pgx.Tx) ([]state.L1InfoTreeRecursiveExitRootStorageEntry, error)) *StorageMock_GetAllL1InfoTreeRecursiveRootEntries_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1707,126 +1861,6 @@ func (_c *StorageMock_GetBatchByTxHash_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// GetBatchL2DataByNumber provides a mock function with given fields: ctx, batchNumber, dbTx
-func (_m *StorageMock) GetBatchL2DataByNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) ([]byte, error) {
-	ret := _m.Called(ctx, batchNumber, dbTx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetBatchL2DataByNumber")
-	}
-
-	var r0 []byte
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, pgx.Tx) ([]byte, error)); ok {
-		return rf(ctx, batchNumber, dbTx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, pgx.Tx) []byte); ok {
-		r0 = rf(ctx, batchNumber, dbTx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uint64, pgx.Tx) error); ok {
-		r1 = rf(ctx, batchNumber, dbTx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// StorageMock_GetBatchL2DataByNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBatchL2DataByNumber'
-type StorageMock_GetBatchL2DataByNumber_Call struct {
-	*mock.Call
-}
-
-// GetBatchL2DataByNumber is a helper method to define mock.On call
-//   - ctx context.Context
-//   - batchNumber uint64
-//   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) GetBatchL2DataByNumber(ctx interface{}, batchNumber interface{}, dbTx interface{}) *StorageMock_GetBatchL2DataByNumber_Call {
-	return &StorageMock_GetBatchL2DataByNumber_Call{Call: _e.mock.On("GetBatchL2DataByNumber", ctx, batchNumber, dbTx)}
-}
-
-func (_c *StorageMock_GetBatchL2DataByNumber_Call) Run(run func(ctx context.Context, batchNumber uint64, dbTx pgx.Tx)) *StorageMock_GetBatchL2DataByNumber_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uint64), args[2].(pgx.Tx))
-	})
-	return _c
-}
-
-func (_c *StorageMock_GetBatchL2DataByNumber_Call) Return(_a0 []byte, _a1 error) *StorageMock_GetBatchL2DataByNumber_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *StorageMock_GetBatchL2DataByNumber_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) ([]byte, error)) *StorageMock_GetBatchL2DataByNumber_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetBatchL2DataByNumbers provides a mock function with given fields: ctx, batchNumbers, dbTx
-func (_m *StorageMock) GetBatchL2DataByNumbers(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error) {
-	ret := _m.Called(ctx, batchNumbers, dbTx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetBatchL2DataByNumbers")
-	}
-
-	var r0 map[uint64][]byte
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []uint64, pgx.Tx) (map[uint64][]byte, error)); ok {
-		return rf(ctx, batchNumbers, dbTx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []uint64, pgx.Tx) map[uint64][]byte); ok {
-		r0 = rf(ctx, batchNumbers, dbTx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[uint64][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []uint64, pgx.Tx) error); ok {
-		r1 = rf(ctx, batchNumbers, dbTx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// StorageMock_GetBatchL2DataByNumbers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBatchL2DataByNumbers'
-type StorageMock_GetBatchL2DataByNumbers_Call struct {
-	*mock.Call
-}
-
-// GetBatchL2DataByNumbers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - batchNumbers []uint64
-//   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) GetBatchL2DataByNumbers(ctx interface{}, batchNumbers interface{}, dbTx interface{}) *StorageMock_GetBatchL2DataByNumbers_Call {
-	return &StorageMock_GetBatchL2DataByNumbers_Call{Call: _e.mock.On("GetBatchL2DataByNumbers", ctx, batchNumbers, dbTx)}
-}
-
-func (_c *StorageMock_GetBatchL2DataByNumbers_Call) Run(run func(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx)) *StorageMock_GetBatchL2DataByNumbers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]uint64), args[2].(pgx.Tx))
-	})
-	return _c
-}
-
-func (_c *StorageMock_GetBatchL2DataByNumbers_Call) Return(_a0 map[uint64][]byte, _a1 error) *StorageMock_GetBatchL2DataByNumbers_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *StorageMock_GetBatchL2DataByNumbers_Call) RunAndReturn(run func(context.Context, []uint64, pgx.Tx) (map[uint64][]byte, error)) *StorageMock_GetBatchL2DataByNumbers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetBatchNumberOfL2Block provides a mock function with given fields: ctx, blockNumber, dbTx
 func (_m *StorageMock) GetBatchNumberOfL2Block(ctx context.Context, blockNumber uint64, dbTx pgx.Tx) (uint64, error) {
 	ret := _m.Called(ctx, blockNumber, dbTx)
@@ -1881,6 +1915,74 @@ func (_c *StorageMock_GetBatchNumberOfL2Block_Call) Return(_a0 uint64, _a1 error
 }
 
 func (_c *StorageMock_GetBatchNumberOfL2Block_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) (uint64, error)) *StorageMock_GetBatchNumberOfL2Block_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetBatchProofsToAggregate provides a mock function with given fields: ctx, dbTx
+func (_m *StorageMock) GetBatchProofsToAggregate(ctx context.Context, dbTx pgx.Tx) (*state.Proof, *state.Proof, error) {
+	ret := _m.Called(ctx, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBatchProofsToAggregate")
+	}
+
+	var r0 *state.Proof
+	var r1 *state.Proof
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) (*state.Proof, *state.Proof, error)); ok {
+		return rf(ctx, dbTx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) *state.Proof); ok {
+		r0 = rf(ctx, dbTx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*state.Proof)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, pgx.Tx) *state.Proof); ok {
+		r1 = rf(ctx, dbTx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*state.Proof)
+		}
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, pgx.Tx) error); ok {
+		r2 = rf(ctx, dbTx)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// StorageMock_GetBatchProofsToAggregate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBatchProofsToAggregate'
+type StorageMock_GetBatchProofsToAggregate_Call struct {
+	*mock.Call
+}
+
+// GetBatchProofsToAggregate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) GetBatchProofsToAggregate(ctx interface{}, dbTx interface{}) *StorageMock_GetBatchProofsToAggregate_Call {
+	return &StorageMock_GetBatchProofsToAggregate_Call{Call: _e.mock.On("GetBatchProofsToAggregate", ctx, dbTx)}
+}
+
+func (_c *StorageMock_GetBatchProofsToAggregate_Call) Run(run func(ctx context.Context, dbTx pgx.Tx)) *StorageMock_GetBatchProofsToAggregate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_GetBatchProofsToAggregate_Call) Return(_a0 *state.Proof, _a1 *state.Proof, _a2 error) *StorageMock_GetBatchProofsToAggregate_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *StorageMock_GetBatchProofsToAggregate_Call) RunAndReturn(run func(context.Context, pgx.Tx) (*state.Proof, *state.Proof, error)) *StorageMock_GetBatchProofsToAggregate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2620,66 +2722,6 @@ func (_c *StorageMock_GetForcedBatch_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// GetForcedBatchDataByNumbers provides a mock function with given fields: ctx, batchNumbers, dbTx
-func (_m *StorageMock) GetForcedBatchDataByNumbers(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error) {
-	ret := _m.Called(ctx, batchNumbers, dbTx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetForcedBatchDataByNumbers")
-	}
-
-	var r0 map[uint64][]byte
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []uint64, pgx.Tx) (map[uint64][]byte, error)); ok {
-		return rf(ctx, batchNumbers, dbTx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []uint64, pgx.Tx) map[uint64][]byte); ok {
-		r0 = rf(ctx, batchNumbers, dbTx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[uint64][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []uint64, pgx.Tx) error); ok {
-		r1 = rf(ctx, batchNumbers, dbTx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// StorageMock_GetForcedBatchDataByNumbers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetForcedBatchDataByNumbers'
-type StorageMock_GetForcedBatchDataByNumbers_Call struct {
-	*mock.Call
-}
-
-// GetForcedBatchDataByNumbers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - batchNumbers []uint64
-//   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) GetForcedBatchDataByNumbers(ctx interface{}, batchNumbers interface{}, dbTx interface{}) *StorageMock_GetForcedBatchDataByNumbers_Call {
-	return &StorageMock_GetForcedBatchDataByNumbers_Call{Call: _e.mock.On("GetForcedBatchDataByNumbers", ctx, batchNumbers, dbTx)}
-}
-
-func (_c *StorageMock_GetForcedBatchDataByNumbers_Call) Run(run func(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx)) *StorageMock_GetForcedBatchDataByNumbers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]uint64), args[2].(pgx.Tx))
-	})
-	return _c
-}
-
-func (_c *StorageMock_GetForcedBatchDataByNumbers_Call) Return(_a0 map[uint64][]byte, _a1 error) *StorageMock_GetForcedBatchDataByNumbers_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *StorageMock_GetForcedBatchDataByNumbers_Call) RunAndReturn(run func(context.Context, []uint64, pgx.Tx) (map[uint64][]byte, error)) *StorageMock_GetForcedBatchDataByNumbers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetForcedBatchParentHash provides a mock function with given fields: ctx, forcedBatchNumber, dbTx
 func (_m *StorageMock) GetForcedBatchParentHash(ctx context.Context, forcedBatchNumber uint64, dbTx pgx.Tx) (common.Hash, error) {
 	ret := _m.Called(ctx, forcedBatchNumber, dbTx)
@@ -2996,6 +3038,64 @@ func (_c *StorageMock_GetForkIDs_Call) Return(_a0 []state.ForkIDInterval, _a1 er
 }
 
 func (_c *StorageMock_GetForkIDs_Call) RunAndReturn(run func(context.Context, pgx.Tx) ([]state.ForkIDInterval, error)) *StorageMock_GetForkIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetL1InfoRecursiveRootLeafByIndex provides a mock function with given fields: ctx, l1InfoTreeIndex, dbTx
+func (_m *StorageMock) GetL1InfoRecursiveRootLeafByIndex(ctx context.Context, l1InfoTreeIndex uint32, dbTx pgx.Tx) (state.L1InfoTreeExitRootStorageEntry, error) {
+	ret := _m.Called(ctx, l1InfoTreeIndex, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetL1InfoRecursiveRootLeafByIndex")
+	}
+
+	var r0 state.L1InfoTreeExitRootStorageEntry
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint32, pgx.Tx) (state.L1InfoTreeExitRootStorageEntry, error)); ok {
+		return rf(ctx, l1InfoTreeIndex, dbTx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint32, pgx.Tx) state.L1InfoTreeExitRootStorageEntry); ok {
+		r0 = rf(ctx, l1InfoTreeIndex, dbTx)
+	} else {
+		r0 = ret.Get(0).(state.L1InfoTreeExitRootStorageEntry)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint32, pgx.Tx) error); ok {
+		r1 = rf(ctx, l1InfoTreeIndex, dbTx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetL1InfoRecursiveRootLeafByIndex'
+type StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call struct {
+	*mock.Call
+}
+
+// GetL1InfoRecursiveRootLeafByIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - l1InfoTreeIndex uint32
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) GetL1InfoRecursiveRootLeafByIndex(ctx interface{}, l1InfoTreeIndex interface{}, dbTx interface{}) *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call {
+	return &StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call{Call: _e.mock.On("GetL1InfoRecursiveRootLeafByIndex", ctx, l1InfoTreeIndex, dbTx)}
+}
+
+func (_c *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call) Run(run func(ctx context.Context, l1InfoTreeIndex uint32, dbTx pgx.Tx)) *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint32), args[2].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call) Return(_a0 state.L1InfoTreeExitRootStorageEntry, _a1 error) *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call) RunAndReturn(run func(context.Context, uint32, pgx.Tx) (state.L1InfoTreeExitRootStorageEntry, error)) *StorageMock_GetL1InfoRecursiveRootLeafByIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3822,6 +3922,65 @@ func (_c *StorageMock_GetLastBatchTime_Call) Return(_a0 time.Time, _a1 error) *S
 }
 
 func (_c *StorageMock_GetLastBatchTime_Call) RunAndReturn(run func(context.Context, pgx.Tx) (time.Time, error)) *StorageMock_GetLastBatchTime_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetLastBlobSequence provides a mock function with given fields: ctx, dbTx
+func (_m *StorageMock) GetLastBlobSequence(ctx context.Context, dbTx pgx.Tx) (*state.BlobSequence, error) {
+	ret := _m.Called(ctx, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLastBlobSequence")
+	}
+
+	var r0 *state.BlobSequence
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) (*state.BlobSequence, error)); ok {
+		return rf(ctx, dbTx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) *state.BlobSequence); ok {
+		r0 = rf(ctx, dbTx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*state.BlobSequence)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, pgx.Tx) error); ok {
+		r1 = rf(ctx, dbTx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StorageMock_GetLastBlobSequence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLastBlobSequence'
+type StorageMock_GetLastBlobSequence_Call struct {
+	*mock.Call
+}
+
+// GetLastBlobSequence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) GetLastBlobSequence(ctx interface{}, dbTx interface{}) *StorageMock_GetLastBlobSequence_Call {
+	return &StorageMock_GetLastBlobSequence_Call{Call: _e.mock.On("GetLastBlobSequence", ctx, dbTx)}
+}
+
+func (_c *StorageMock_GetLastBlobSequence_Call) Run(run func(ctx context.Context, dbTx pgx.Tx)) *StorageMock_GetLastBlobSequence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_GetLastBlobSequence_Call) Return(_a0 *state.BlobSequence, _a1 error) *StorageMock_GetLastBlobSequence_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StorageMock_GetLastBlobSequence_Call) RunAndReturn(run func(context.Context, pgx.Tx) (*state.BlobSequence, error)) *StorageMock_GetLastBlobSequence_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -5130,6 +5289,64 @@ func (_c *StorageMock_GetLatestL1InfoRoot_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
+// GetLatestL1InfoTreeRecursiveRoot provides a mock function with given fields: ctx, maxBlockNumber, dbTx
+func (_m *StorageMock) GetLatestL1InfoTreeRecursiveRoot(ctx context.Context, maxBlockNumber uint64, dbTx pgx.Tx) (state.L1InfoTreeRecursiveExitRootStorageEntry, error) {
+	ret := _m.Called(ctx, maxBlockNumber, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestL1InfoTreeRecursiveRoot")
+	}
+
+	var r0 state.L1InfoTreeRecursiveExitRootStorageEntry
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, pgx.Tx) (state.L1InfoTreeRecursiveExitRootStorageEntry, error)); ok {
+		return rf(ctx, maxBlockNumber, dbTx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, pgx.Tx) state.L1InfoTreeRecursiveExitRootStorageEntry); ok {
+		r0 = rf(ctx, maxBlockNumber, dbTx)
+	} else {
+		r0 = ret.Get(0).(state.L1InfoTreeRecursiveExitRootStorageEntry)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint64, pgx.Tx) error); ok {
+		r1 = rf(ctx, maxBlockNumber, dbTx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLatestL1InfoTreeRecursiveRoot'
+type StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call struct {
+	*mock.Call
+}
+
+// GetLatestL1InfoTreeRecursiveRoot is a helper method to define mock.On call
+//   - ctx context.Context
+//   - maxBlockNumber uint64
+//   - dbTx pgx.Tx
+func (_e *StorageMock_Expecter) GetLatestL1InfoTreeRecursiveRoot(ctx interface{}, maxBlockNumber interface{}, dbTx interface{}) *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call {
+	return &StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call{Call: _e.mock.On("GetLatestL1InfoTreeRecursiveRoot", ctx, maxBlockNumber, dbTx)}
+}
+
+func (_c *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call) Run(run func(ctx context.Context, maxBlockNumber uint64, dbTx pgx.Tx)) *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint64), args[2].(pgx.Tx))
+	})
+	return _c
+}
+
+func (_c *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call) Return(_a0 state.L1InfoTreeRecursiveExitRootStorageEntry, _a1 error) *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) (state.L1InfoTreeRecursiveExitRootStorageEntry, error)) *StorageMock_GetLatestL1InfoTreeRecursiveRoot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetLatestVirtualBatchTimestamp provides a mock function with given fields: ctx, dbTx
 func (_m *StorageMock) GetLatestVirtualBatchTimestamp(ctx context.Context, dbTx pgx.Tx) (time.Time, error) {
 	ret := _m.Called(ctx, dbTx)
@@ -5849,12 +6066,12 @@ func (_c *StorageMock_GetProcessingContext_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// GetProofReadyToVerify provides a mock function with given fields: ctx, lastVerfiedBatchNumber, dbTx
-func (_m *StorageMock) GetProofReadyToVerify(ctx context.Context, lastVerfiedBatchNumber uint64, dbTx pgx.Tx) (*state.Proof, error) {
+// GetProofReadyForFinal provides a mock function with given fields: ctx, lastVerfiedBatchNumber, dbTx
+func (_m *StorageMock) GetProofReadyForFinal(ctx context.Context, lastVerfiedBatchNumber uint64, dbTx pgx.Tx) (*state.Proof, error) {
 	ret := _m.Called(ctx, lastVerfiedBatchNumber, dbTx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetProofReadyToVerify")
+		panic("no return value specified for GetProofReadyForFinal")
 	}
 
 	var r0 *state.Proof
@@ -5879,100 +6096,32 @@ func (_m *StorageMock) GetProofReadyToVerify(ctx context.Context, lastVerfiedBat
 	return r0, r1
 }
 
-// StorageMock_GetProofReadyToVerify_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProofReadyToVerify'
-type StorageMock_GetProofReadyToVerify_Call struct {
+// StorageMock_GetProofReadyForFinal_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProofReadyForFinal'
+type StorageMock_GetProofReadyForFinal_Call struct {
 	*mock.Call
 }
 
-// GetProofReadyToVerify is a helper method to define mock.On call
+// GetProofReadyForFinal is a helper method to define mock.On call
 //   - ctx context.Context
 //   - lastVerfiedBatchNumber uint64
 //   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) GetProofReadyToVerify(ctx interface{}, lastVerfiedBatchNumber interface{}, dbTx interface{}) *StorageMock_GetProofReadyToVerify_Call {
-	return &StorageMock_GetProofReadyToVerify_Call{Call: _e.mock.On("GetProofReadyToVerify", ctx, lastVerfiedBatchNumber, dbTx)}
+func (_e *StorageMock_Expecter) GetProofReadyForFinal(ctx interface{}, lastVerfiedBatchNumber interface{}, dbTx interface{}) *StorageMock_GetProofReadyForFinal_Call {
+	return &StorageMock_GetProofReadyForFinal_Call{Call: _e.mock.On("GetProofReadyForFinal", ctx, lastVerfiedBatchNumber, dbTx)}
 }
 
-func (_c *StorageMock_GetProofReadyToVerify_Call) Run(run func(ctx context.Context, lastVerfiedBatchNumber uint64, dbTx pgx.Tx)) *StorageMock_GetProofReadyToVerify_Call {
+func (_c *StorageMock_GetProofReadyForFinal_Call) Run(run func(ctx context.Context, lastVerfiedBatchNumber uint64, dbTx pgx.Tx)) *StorageMock_GetProofReadyForFinal_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uint64), args[2].(pgx.Tx))
 	})
 	return _c
 }
 
-func (_c *StorageMock_GetProofReadyToVerify_Call) Return(_a0 *state.Proof, _a1 error) *StorageMock_GetProofReadyToVerify_Call {
+func (_c *StorageMock_GetProofReadyForFinal_Call) Return(_a0 *state.Proof, _a1 error) *StorageMock_GetProofReadyForFinal_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *StorageMock_GetProofReadyToVerify_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) (*state.Proof, error)) *StorageMock_GetProofReadyToVerify_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetProofsToAggregate provides a mock function with given fields: ctx, dbTx
-func (_m *StorageMock) GetProofsToAggregate(ctx context.Context, dbTx pgx.Tx) (*state.Proof, *state.Proof, error) {
-	ret := _m.Called(ctx, dbTx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetProofsToAggregate")
-	}
-
-	var r0 *state.Proof
-	var r1 *state.Proof
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) (*state.Proof, *state.Proof, error)); ok {
-		return rf(ctx, dbTx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, pgx.Tx) *state.Proof); ok {
-		r0 = rf(ctx, dbTx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*state.Proof)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, pgx.Tx) *state.Proof); ok {
-		r1 = rf(ctx, dbTx)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*state.Proof)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(context.Context, pgx.Tx) error); ok {
-		r2 = rf(ctx, dbTx)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// StorageMock_GetProofsToAggregate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProofsToAggregate'
-type StorageMock_GetProofsToAggregate_Call struct {
-	*mock.Call
-}
-
-// GetProofsToAggregate is a helper method to define mock.On call
-//   - ctx context.Context
-//   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) GetProofsToAggregate(ctx interface{}, dbTx interface{}) *StorageMock_GetProofsToAggregate_Call {
-	return &StorageMock_GetProofsToAggregate_Call{Call: _e.mock.On("GetProofsToAggregate", ctx, dbTx)}
-}
-
-func (_c *StorageMock_GetProofsToAggregate_Call) Run(run func(ctx context.Context, dbTx pgx.Tx)) *StorageMock_GetProofsToAggregate_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(pgx.Tx))
-	})
-	return _c
-}
-
-func (_c *StorageMock_GetProofsToAggregate_Call) Return(_a0 *state.Proof, _a1 *state.Proof, _a2 error) *StorageMock_GetProofsToAggregate_Call {
-	_c.Call.Return(_a0, _a1, _a2)
-	return _c
-}
-
-func (_c *StorageMock_GetProofsToAggregate_Call) RunAndReturn(run func(context.Context, pgx.Tx) (*state.Proof, *state.Proof, error)) *StorageMock_GetProofsToAggregate_Call {
+func (_c *StorageMock_GetProofReadyForFinal_Call) RunAndReturn(run func(context.Context, uint64, pgx.Tx) (*state.Proof, error)) *StorageMock_GetProofReadyForFinal_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -8513,17 +8662,17 @@ func (_c *StorageMock_UpdateBatchL2Data_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
-// UpdateBatchTimestamp provides a mock function with given fields: ctx, batchNumber, timestamp, dbTx
-func (_m *StorageMock) UpdateBatchTimestamp(ctx context.Context, batchNumber uint64, timestamp time.Time, dbTx pgx.Tx) error {
-	ret := _m.Called(ctx, batchNumber, timestamp, dbTx)
+// UpdateBatchProof provides a mock function with given fields: ctx, proof, dbTx
+func (_m *StorageMock) UpdateBatchProof(ctx context.Context, proof *state.Proof, dbTx pgx.Tx) error {
+	ret := _m.Called(ctx, proof, dbTx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateBatchTimestamp")
+		panic("no return value specified for UpdateBatchProof")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, time.Time, pgx.Tx) error); ok {
-		r0 = rf(ctx, batchNumber, timestamp, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, *state.Proof, pgx.Tx) error); ok {
+		r0 = rf(ctx, proof, dbTx)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -8531,33 +8680,32 @@ func (_m *StorageMock) UpdateBatchTimestamp(ctx context.Context, batchNumber uin
 	return r0
 }
 
-// StorageMock_UpdateBatchTimestamp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBatchTimestamp'
-type StorageMock_UpdateBatchTimestamp_Call struct {
+// StorageMock_UpdateBatchProof_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBatchProof'
+type StorageMock_UpdateBatchProof_Call struct {
 	*mock.Call
 }
 
-// UpdateBatchTimestamp is a helper method to define mock.On call
+// UpdateBatchProof is a helper method to define mock.On call
 //   - ctx context.Context
-//   - batchNumber uint64
-//   - timestamp time.Time
+//   - proof *state.Proof
 //   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) UpdateBatchTimestamp(ctx interface{}, batchNumber interface{}, timestamp interface{}, dbTx interface{}) *StorageMock_UpdateBatchTimestamp_Call {
-	return &StorageMock_UpdateBatchTimestamp_Call{Call: _e.mock.On("UpdateBatchTimestamp", ctx, batchNumber, timestamp, dbTx)}
+func (_e *StorageMock_Expecter) UpdateBatchProof(ctx interface{}, proof interface{}, dbTx interface{}) *StorageMock_UpdateBatchProof_Call {
+	return &StorageMock_UpdateBatchProof_Call{Call: _e.mock.On("UpdateBatchProof", ctx, proof, dbTx)}
 }
 
-func (_c *StorageMock_UpdateBatchTimestamp_Call) Run(run func(ctx context.Context, batchNumber uint64, timestamp time.Time, dbTx pgx.Tx)) *StorageMock_UpdateBatchTimestamp_Call {
+func (_c *StorageMock_UpdateBatchProof_Call) Run(run func(ctx context.Context, proof *state.Proof, dbTx pgx.Tx)) *StorageMock_UpdateBatchProof_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uint64), args[2].(time.Time), args[3].(pgx.Tx))
+		run(args[0].(context.Context), args[1].(*state.Proof), args[2].(pgx.Tx))
 	})
 	return _c
 }
 
-func (_c *StorageMock_UpdateBatchTimestamp_Call) Return(_a0 error) *StorageMock_UpdateBatchTimestamp_Call {
+func (_c *StorageMock_UpdateBatchProof_Call) Return(_a0 error) *StorageMock_UpdateBatchProof_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *StorageMock_UpdateBatchTimestamp_Call) RunAndReturn(run func(context.Context, uint64, time.Time, pgx.Tx) error) *StorageMock_UpdateBatchTimestamp_Call {
+func (_c *StorageMock_UpdateBatchProof_Call) RunAndReturn(run func(context.Context, *state.Proof, pgx.Tx) error) *StorageMock_UpdateBatchProof_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -8786,54 +8934,6 @@ func (_c *StorageMock_UpdateGERInOpenBatch_Call) Return(_a0 error) *StorageMock_
 }
 
 func (_c *StorageMock_UpdateGERInOpenBatch_Call) RunAndReturn(run func(context.Context, common.Hash, pgx.Tx) error) *StorageMock_UpdateGERInOpenBatch_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateGeneratedProof provides a mock function with given fields: ctx, proof, dbTx
-func (_m *StorageMock) UpdateGeneratedProof(ctx context.Context, proof *state.Proof, dbTx pgx.Tx) error {
-	ret := _m.Called(ctx, proof, dbTx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateGeneratedProof")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *state.Proof, pgx.Tx) error); ok {
-		r0 = rf(ctx, proof, dbTx)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// StorageMock_UpdateGeneratedProof_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGeneratedProof'
-type StorageMock_UpdateGeneratedProof_Call struct {
-	*mock.Call
-}
-
-// UpdateGeneratedProof is a helper method to define mock.On call
-//   - ctx context.Context
-//   - proof *state.Proof
-//   - dbTx pgx.Tx
-func (_e *StorageMock_Expecter) UpdateGeneratedProof(ctx interface{}, proof interface{}, dbTx interface{}) *StorageMock_UpdateGeneratedProof_Call {
-	return &StorageMock_UpdateGeneratedProof_Call{Call: _e.mock.On("UpdateGeneratedProof", ctx, proof, dbTx)}
-}
-
-func (_c *StorageMock_UpdateGeneratedProof_Call) Run(run func(ctx context.Context, proof *state.Proof, dbTx pgx.Tx)) *StorageMock_UpdateGeneratedProof_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*state.Proof), args[2].(pgx.Tx))
-	})
-	return _c
-}
-
-func (_c *StorageMock_UpdateGeneratedProof_Call) Return(_a0 error) *StorageMock_UpdateGeneratedProof_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *StorageMock_UpdateGeneratedProof_Call) RunAndReturn(run func(context.Context, *state.Proof, pgx.Tx) error) *StorageMock_UpdateGeneratedProof_Call {
 	_c.Call.Return(run)
 	return _c
 }

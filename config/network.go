@@ -25,16 +25,17 @@ type NetworkConfig struct {
 
 type network string
 
+const mainnet network = "mainnet"
+const testnet network = "testnet"
+const cardona network = "cardona"
 const custom network = "custom"
 
 // GenesisFromJSON is the config file for network_custom
 type GenesisFromJSON struct {
 	// L1: root hash of the genesis block
 	Root string `json:"root"`
-	// L1: block number in which the rollup was created
-	RollupCreationBlockNum uint64 `json:"rollupCreationBlockNumber"`
-	// L1: block number in which the rollup manager was created
-	RollupManagerCreationBlockNum uint64 `json:"rollupManagerCreationBlockNumber"`
+	// L1: block number of the genesis block
+	GenesisBlockNum uint64 `json:"genesisBlockNumber"`
 	// L2:  List of states contracts used to populate merkle tree at initial state
 	Genesis []genesisAccountFromJSON `json:"genesis"`
 	// L1: configuration of the network
@@ -59,6 +60,12 @@ type genesisAccountFromJSON struct {
 func (cfg *Config) loadNetworkConfig(ctx *cli.Context) {
 	var networkJSON string
 	switch ctx.String(FlagNetwork) {
+	case string(mainnet):
+		networkJSON = MainnetNetworkConfigJSON
+	case string(testnet):
+		networkJSON = TestnetNetworkConfigJSON
+	case string(cardona):
+		networkJSON = CardonaNetworkConfigJSON
 	case string(custom):
 		var err error
 		cfgPath := ctx.String(FlagCustomNetwork)
@@ -67,7 +74,7 @@ func (cfg *Config) loadNetworkConfig(ctx *cli.Context) {
 			panic(err.Error())
 		}
 	default:
-		log.Fatalf("unsupported --network value. Must be %s", custom)
+		log.Fatalf("unsupported --network value. Must be one of: [%s, %s, %s]", mainnet, testnet, cardona, custom)
 	}
 	config, err := LoadGenesisFromJSONString(networkJSON)
 	if err != nil {
@@ -115,10 +122,9 @@ func LoadGenesisFromJSONString(jsonStr string) (NetworkConfig, error) {
 
 	cfg.L1Config = cfgJSON.L1Config
 	cfg.Genesis = state.Genesis{
-		RollupBlockNumber:        cfgJSON.RollupCreationBlockNum,
-		RollupManagerBlockNumber: cfgJSON.RollupManagerCreationBlockNum,
-		Root:                     common.HexToHash(cfgJSON.Root),
-		Actions:                  []*state.GenesisAction{},
+		BlockNumber: cfgJSON.GenesisBlockNum,
+		Root:        common.HexToHash(cfgJSON.Root),
+		Actions:     []*state.GenesisAction{},
 	}
 
 	for _, account := range cfgJSON.Genesis {

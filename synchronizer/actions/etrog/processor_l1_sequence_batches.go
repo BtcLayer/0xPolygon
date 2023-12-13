@@ -32,7 +32,6 @@ type stateProcessSequenceBatches interface {
 	AddVirtualBatch(ctx context.Context, virtualBatch *state.VirtualBatch, dbTx pgx.Tx) error
 	AddTrustedReorg(ctx context.Context, trustedReorg *state.TrustedReorg, dbTx pgx.Tx) error
 	GetL1InfoTreeDataFromBatchL2Data(ctx context.Context, batchL2Data []byte, dbTx pgx.Tx) (map[uint32]state.L1DataV2, common.Hash, common.Hash, error)
-	UpdateBatchTimestamp(ctx context.Context, batchNumber uint64, timestamp time.Time, dbTx pgx.Tx) error
 }
 
 type syncProcessSequenceBatchesInterface interface {
@@ -56,9 +55,9 @@ func NewProcessorL1SequenceBatches(state stateProcessSequenceBatches,
 	timeProvider syncCommon.TimeProvider,
 	halter syncinterfaces.CriticalErrorHandler) *ProcessorL1SequenceBatchesEtrog {
 	return &ProcessorL1SequenceBatchesEtrog{
-		ProcessorBase: actions.ProcessorBase[ProcessorL1SequenceBatchesEtrog]{
-			SupportedEvent:    []etherman.EventOrder{etherman.SequenceBatchesOrder, etherman.InitialSequenceBatchesOrder},
-			SupportedForkdIds: &actions.ForksIdOnlyEtrog},
+		ProcessorBase: *actions.NewProcessorBase[ProcessorL1SequenceBatchesEtrog](
+			[]etherman.EventOrder{etherman.SequenceBatchesOrder, etherman.InitialSequenceBatchesOrder},
+			actions.ForksIdOnlyEtrog),
 		state:        state,
 		sync:         sync,
 		timeProvider: timeProvider,
@@ -159,7 +158,7 @@ func (p *ProcessorL1SequenceBatchesEtrog) ProcessSequenceBatches(ctx context.Con
 				SkipVerifyL1InfoRoot: 1,
 				ClosingReason:        state.SyncL1EventSequencedForcedBatchClosingReason,
 			}
-		} else if sbatch.PolygonRollupBaseEtrogBatchData.ForcedTimestamp > 0 && sbatch.BatchNumber == 1 { // This is the initial batch (injected)
+		} else if sbatch.PolygonRollupBaseEtrogBatchData.ForcedTimestamp > 0 && sbatch.BatchNumber == 1 {
 			log.Debug("Processing initial batch")
 			batch.GlobalExitRoot = sbatch.PolygonRollupBaseEtrogBatchData.ForcedGlobalExitRoot
 			var fBHL1 common.Hash = sbatch.PolygonRollupBaseEtrogBatchData.ForcedBlockHashL1
@@ -252,17 +251,6 @@ func (p *ProcessorL1SequenceBatchesEtrog) ProcessSequenceBatches(ctx context.Con
 				return err
 			}
 		} else {
-			// Batch already exists
-			// We update the timestamp of the batch to match the timestamp
-			err := p.state.UpdateBatchTimestamp(ctx, batch.BatchNumber, *processCtx.Timestamp, dbTx)
-			if err != nil {
-				log.Errorf("error updating batch timestamp %s. BatchNumber: %d, BlockNumber: %d, error: %v", processCtx.Timestamp, batch.BatchNumber, blockNumber, err)
-				rollbackErr := dbTx.Rollback(ctx)
-				if rollbackErr != nil {
-					log.Errorf("error rolling back state because error updating batch timestamp. BatchNumber: %d, BlockNumber: %d, rollbackErr: %s, error : %v", batch.BatchNumber, blockNumber, rollbackErr.Error(), err)
-					return rollbackErr
-				}
-			}
 			// Reprocess batch to compare the stateRoot with tBatch.StateRoot and get accInputHash
 			batchRespose, err := p.state.ExecuteBatchV2(ctx, batch, processCtx.L1InfoRoot, leaves, *processCtx.Timestamp, false, processCtx.SkipVerifyL1InfoRoot, processCtx.ForcedBlockHashL1, dbTx)
 			if err != nil {

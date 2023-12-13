@@ -106,7 +106,7 @@ TrustedSequencerURL = "" # If it is empty or not specified, then the value is re
 SyncBlockProtection = "safe" # latest, finalized, safe
 L1SynchronizationMode = "sequential"
 L1SyncCheckL2BlockHash = true
-L1SyncCheckL2BlockNumberhModulus = 600
+L1SyncCheckL2BlockNumberModulus = 600
 	[Synchronizer.L1BlockCheck]
 		Enabled = true
 		L1SafeBlockPoint = "finalized"
@@ -131,9 +131,8 @@ L1SyncCheckL2BlockNumberhModulus = 600
 	[Synchronizer.L2Synchronization]
 		Enabled = true
 		AcceptEmptyClosedBatches = false
-		ReprocessFullBatchOnClose = false
+		ReprocessFullBatchOnClose = true
 		CheckLastL2BlockHashOnCloseBatch = true
-		DataSourcePriority = ["local","trusted","external"]
 
 [Sequencer]
 DeletePoolTxsL1BlockConfirmations = 100
@@ -165,6 +164,8 @@ StateConsistencyCheckInterval = "5s"
 		Filename = ""
 		Version = 0
 		WriteTimeout = "5s"
+		InactivityTimeout = "120s"
+		InactivityCheckInterval = "5s"
 		Enabled = false
 
 [SequenceSender]
@@ -176,7 +177,6 @@ SequenceL1BlockConfirmations = 32
 L2Coinbase = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 PrivateKey = {Path = "/pk/sequencer.keystore", Password = "testonly"}
 GasOffset = 80000
-MaxBatchesForL1 = 300
 
 [Aggregator]
 Host = "0.0.0.0"
@@ -191,10 +191,6 @@ GeneratingProofCleanupThreshold = "10m"
 GasOffset = 0
 UpgradeEtrogBatchNumber = 0
 BatchProofL1BlockConfirmations = 2
-SettlementBackend = "agglayer"
-AggLayerTxTimeout = "5m"
-AggLayerURL = "http://zkevm-agglayer"
-SequencerPrivateKey = {Path = "/pk/sequencer.keystore", Password = "testonly"}
 
 [L2GasPriceSuggester]
 Type = "follower"

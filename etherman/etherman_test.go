@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/0xPolygonHermez/zkevm-node/encoding"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmbridge"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/etrogpolygonzkevm"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/etrogpolygonzkevmbridge"
 	ethmanTypes "github.com/0xPolygonHermez/zkevm-node/etherman/types"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/0xPolygonHermez/zkevm-node/state"
@@ -38,7 +38,7 @@ func init() {
 }
 
 // This function prepare the blockchain, the wallet with funds and deploy the smc
-func newTestingEnv(t *testing.T) (ethman *Client, ethBackend *simulated.Backend, auth *bind.TransactOpts, polAddr common.Address, br *polygonzkevmbridge.Polygonzkevmbridge, da *daMock, st *stateMock) {
+func newTestingEnv() (ethman *Client, ethBackend *simulated.Backend, auth *bind.TransactOpts, polAddr common.Address, br *etrogpolygonzkevmbridge.Etrogpolygonzkevmbridge) {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
 		log.Fatal(err)
@@ -47,9 +47,7 @@ func newTestingEnv(t *testing.T) (ethman *Client, ethBackend *simulated.Backend,
 	if err != nil {
 		log.Fatal(err)
 	}
-	da = newDaMock(t)
-	st = newStateMock(t)
-	ethman, ethBackend, polAddr, br, err = NewSimulatedEtherman(Config{ForkIDChunkSize: 10}, auth, da, st)
+	ethman, ethBackend, polAddr, br, err = NewSimulatedEtherman(Config{ForkIDChunkSize: 10}, auth)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,12 +55,12 @@ func newTestingEnv(t *testing.T) (ethman *Client, ethBackend *simulated.Backend,
 	if err != nil {
 		log.Fatal(err)
 	}
-	return ethman, ethBackend, auth, polAddr, br, da, st
+	return ethman, ethBackend, auth, polAddr, br
 }
 
 func TestGEREvent(t *testing.T) {
 	// Set up testing environment
-	etherman, ethBackend, auth, _, br, _, _ := newTestingEnv(t)
+	etherman, ethBackend, auth, _, br := newTestingEnv()
 
 	// Read currentBlock
 	ctx := context.Background()
@@ -84,26 +82,26 @@ func TestGEREvent(t *testing.T) {
 	blocks, _, err := etherman.GetRollupInfoByBlockRange(ctx, initBlock.NumberU64(), &finalBlockNumber)
 	require.NoError(t, err)
 	t.Logf("Blocks: %+v", blocks)
-	assert.Equal(t, uint64(11), blocks[0].L1InfoTree[0].BlockNumber)
+	assert.Equal(t, uint64(8), blocks[0].L1InfoTree[0].BlockNumber)
 	assert.NotEqual(t, common.Hash{}, blocks[0].L1InfoTree[0].MainnetExitRoot)
 	assert.Equal(t, common.Hash{}, blocks[0].L1InfoTree[0].RollupExitRoot)
 }
 
 func TestForcedBatchEvent(t *testing.T) {
 	// Set up testing environment
-	etherman, ethBackend, auth, _, _, _, _ := newTestingEnv(t)
+	etherman, ethBackend, auth, _, _ := newTestingEnv()
 
 	// Read currentBlock
 	ctx := context.Background()
 	initBlock, err := etherman.EthClient.BlockByNumber(ctx, nil)
 	require.NoError(t, err)
 
-	amount, err := etherman.RollupManager.GetForcedBatchFee(&bind.CallOpts{Pending: false})
+	amount, err := etherman.EtrogRollupManager.GetForcedBatchFee(&bind.CallOpts{Pending: false})
 	require.NoError(t, err)
 	rawTxs := "f84901843b9aca00827b0c945fbdb2315678afecb367f032d93f642f64180aa380a46057361d00000000000000000000000000000000000000000000000000000000000000048203e9808073efe1fa2d3e27f26f32208550ea9b0274d49050b816cadab05a771f4275d0242fd5d92b3fb89575c070e6c930587c520ee65a3aa8cfe382fcad20421bf51d621c"
 	data, err := hex.DecodeString(rawTxs)
 	require.NoError(t, err)
-	_, err = etherman.ZkEVM.ForceBatch(auth, data, amount)
+	_, err = etherman.EtrogZkEVM.ForceBatch(auth, data, amount)
 	require.NoError(t, err)
 
 	// Mine the tx in a block
@@ -116,8 +114,8 @@ func TestForcedBatchEvent(t *testing.T) {
 	blocks, _, err := etherman.GetRollupInfoByBlockRange(ctx, initBlock.NumberU64(), &finalBlockNumber)
 	require.NoError(t, err)
 	t.Logf("Blocks: %+v", blocks)
-	assert.Equal(t, uint64(11), blocks[0].BlockNumber)
-	assert.Equal(t, uint64(11), blocks[0].ForcedBatches[0].BlockNumber)
+	assert.Equal(t, uint64(8), blocks[0].BlockNumber)
+	assert.Equal(t, uint64(8), blocks[0].ForcedBatches[0].BlockNumber)
 	assert.NotEqual(t, common.Hash{}, blocks[0].ForcedBatches[0].GlobalExitRoot)
 	assert.NotEqual(t, time.Time{}, blocks[0].ForcedBatches[0].ForcedAt)
 	assert.Equal(t, uint64(1), blocks[0].ForcedBatches[0].ForcedBatchNumber)
@@ -127,7 +125,7 @@ func TestForcedBatchEvent(t *testing.T) {
 
 func TestSequencedBatchesEvent(t *testing.T) {
 	// Set up testing environment
-	etherman, ethBackend, auth, _, br, da, _ := newTestingEnv(t)
+	etherman, ethBackend, auth, _, br := newTestingEnv()
 
 	// Read currentBlock
 	ctx := context.Background()
@@ -141,12 +139,12 @@ func TestSequencedBatchesEvent(t *testing.T) {
 	ethBackend.Commit()
 	auth.Value = big.NewInt(0)
 
-	amount, err := etherman.RollupManager.GetForcedBatchFee(&bind.CallOpts{Pending: false})
+	amount, err := etherman.EtrogRollupManager.GetForcedBatchFee(&bind.CallOpts{Pending: false})
 	require.NoError(t, err)
 	rawTxs := "f84901843b9aca00827b0c945fbdb2315678afecb367f032d93f642f64180aa380a46057361d00000000000000000000000000000000000000000000000000000000000000048203e9808073efe1fa2d3e27f26f32208550ea9b0274d49050b816cadab05a771f4275d0242fd5d92b3fb89575c070e6c930587c520ee65a3aa8cfe382fcad20421bf51d621c"
 	data, err := hex.DecodeString(rawTxs)
 	require.NoError(t, err)
-	_, err = etherman.ZkEVM.ForceBatch(auth, data, amount)
+	_, err = etherman.EtrogZkEVM.ForceBatch(auth, data, amount)
 	require.NoError(t, err)
 	require.NoError(t, err)
 	ethBackend.Commit()
@@ -158,19 +156,13 @@ func TestSequencedBatchesEvent(t *testing.T) {
 	blocks, _, err := etherman.GetRollupInfoByBlockRange(ctx, initBlock.NumberU64(), &currentBlockNumber)
 	require.NoError(t, err)
 	t.Log("Blocks: ", blocks)
-	var sequences []polygonzkevm.PolygonValidiumEtrogValidiumBatchData
-	txsHash := crypto.Keccak256Hash(common.Hex2Bytes(rawTxs))
-	sequences = append(sequences, polygonzkevm.PolygonValidiumEtrogValidiumBatchData{
-		TransactionsHash: txsHash,
-	}, polygonzkevm.PolygonValidiumEtrogValidiumBatchData{
-		TransactionsHash: txsHash,
+	var sequences []etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData
+	sequences = append(sequences, etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{
+		Transactions: common.Hex2Bytes(rawTxs),
+	}, etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{
+		Transactions: common.Hex2Bytes(rawTxs),
 	})
-	batchNums := []uint64{2, 3}
-	batchHashes := []common.Hash{txsHash, txsHash}
-	batchData := [][]byte{data, data}
-	daMessage, _ := hex.DecodeString("0x123456789123456789")
-	da.Mock.On("GetBatchL2Data", batchNums, batchHashes, daMessage).Return(batchData, nil)
-	_, err = etherman.ZkEVM.SequenceBatchesValidium(auth, sequences, uint64(time.Now().Unix()), uint64(1), auth.From, daMessage)
+	_, err = etherman.EtrogZkEVM.SequenceBatches(auth, sequences, uint64(time.Now().Unix()), uint64(1), auth.From)
 	require.NoError(t, err)
 
 	// Mine the tx in a block
@@ -196,7 +188,7 @@ func TestSequencedBatchesEvent(t *testing.T) {
 
 func TestVerifyBatchEvent(t *testing.T) {
 	// Set up testing environment
-	etherman, ethBackend, auth, _, _, da, _ := newTestingEnv(t)
+	etherman, ethBackend, auth, _, _ := newTestingEnv()
 
 	// Read currentBlock
 	ctx := context.Background()
@@ -205,18 +197,17 @@ func TestVerifyBatchEvent(t *testing.T) {
 	require.NoError(t, err)
 
 	rawTxs := "f84901843b9aca00827b0c945fbdb2315678afecb367f032d93f642f64180aa380a46057361d00000000000000000000000000000000000000000000000000000000000000048203e9808073efe1fa2d3e27f26f32208550ea9b0274d49050b816cadab05a771f4275d0242fd5d92b3fb89575c070e6c930587c520ee65a3aa8cfe382fcad20421bf51d621c"
-	tx := polygonzkevm.PolygonValidiumEtrogValidiumBatchData{
-		TransactionsHash: crypto.Keccak256Hash(common.Hex2Bytes(rawTxs)),
+	tx := etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{
+		Transactions: common.Hex2Bytes(rawTxs),
 	}
-	daMessage, _ := hex.DecodeString("0x1234")
-	_, err = etherman.ZkEVM.SequenceBatchesValidium(auth, []polygonzkevm.PolygonValidiumEtrogValidiumBatchData{tx}, uint64(time.Now().Unix()), uint64(1), auth.From, daMessage)
+	//TODO: Fix params
+	_, err = etherman.EtrogZkEVM.SequenceBatches(auth, []etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{tx}, uint64(time.Now().Unix()), uint64(1), auth.From)
 	require.NoError(t, err)
-	da.Mock.On("GetBatchL2Data", []uint64{2}, []common.Hash{crypto.Keccak256Hash(common.Hex2Bytes(rawTxs))}, daMessage).Return([][]byte{common.Hex2Bytes(rawTxs)}, nil)
 
 	// Mine the tx in a block
 	ethBackend.Commit()
 
-	_, err = etherman.RollupManager.VerifyBatchesTrustedAggregator(auth, 1, uint64(0), uint64(0), uint64(1), [32]byte{}, [32]byte{}, auth.From, [24][32]byte{})
+	_, err = etherman.EtrogRollupManager.VerifyBatchesTrustedAggregator(auth, 1, uint64(0), uint64(0), uint64(1), [32]byte{}, [32]byte{}, auth.From, [24][32]byte{})
 	require.NoError(t, err)
 
 	// Mine the tx in a block
@@ -229,7 +220,7 @@ func TestVerifyBatchEvent(t *testing.T) {
 	blocks, order, err := etherman.GetRollupInfoByBlockRange(ctx, initBlock.NumberU64(), &finalBlockNumber)
 	require.NoError(t, err)
 	t.Logf("Blocks: %+v, \nOrder: %+v", blocks, order)
-	assert.Equal(t, uint64(12), blocks[1].BlockNumber)
+	assert.Equal(t, uint64(9), blocks[1].BlockNumber)
 	assert.Equal(t, uint64(1), blocks[1].VerifiedBatches[0].BatchNumber)
 	assert.NotEqual(t, common.Address{}, blocks[1].VerifiedBatches[0].Aggregator)
 	assert.NotEqual(t, common.Hash{}, blocks[1].VerifiedBatches[0].TxHash)
@@ -241,19 +232,19 @@ func TestVerifyBatchEvent(t *testing.T) {
 
 func TestSequenceForceBatchesEvent(t *testing.T) {
 	// Set up testing environment
-	etherman, ethBackend, auth, _, _, _, _ := newTestingEnv(t)
+	etherman, ethBackend, auth, _, _ := newTestingEnv()
 
 	// Read currentBlock
 	ctx := context.Background()
 	initBlock, err := etherman.EthClient.BlockByNumber(ctx, nil)
 	require.NoError(t, err)
 
-	amount, err := etherman.RollupManager.GetForcedBatchFee(&bind.CallOpts{Pending: false})
+	amount, err := etherman.EtrogRollupManager.GetForcedBatchFee(&bind.CallOpts{Pending: false})
 	require.NoError(t, err)
 	rawTxs := "f84901843b9aca00827b0c945fbdb2315678afecb367f032d93f642f64180aa380a46057361d00000000000000000000000000000000000000000000000000000000000000048203e9808073efe1fa2d3e27f26f32208550ea9b0274d49050b816cadab05a771f4275d0242fd5d92b3fb89575c070e6c930587c520ee65a3aa8cfe382fcad20421bf51d621c"
 	data, err := hex.DecodeString(rawTxs)
 	require.NoError(t, err)
-	_, err = etherman.ZkEVM.ForceBatch(auth, data, amount)
+	_, err = etherman.EtrogZkEVM.ForceBatch(auth, data, amount)
 	require.NoError(t, err)
 	ethBackend.Commit()
 	ethBackend.Commit()
@@ -275,13 +266,13 @@ func TestSequenceForceBatchesEvent(t *testing.T) {
 	prevBlock, err := etherman.EthClient.BlockByNumber(ctx, big.NewInt(0).SetUint64(blocks[0].BlockNumber-1))
 	require.NoError(t, err)
 	forcedBlockHashL1 := prevBlock.Hash()
-	forceBatchData := polygonzkevm.PolygonRollupBaseEtrogBatchData{
+	forceBatchData := etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{
 		Transactions:         blocks[0].ForcedBatches[0].RawTxsData,
 		ForcedGlobalExitRoot: forcedGer,
 		ForcedTimestamp:      forcedTimestamp,
 		ForcedBlockHashL1:    forcedBlockHashL1,
 	}
-	_, err = etherman.ZkEVM.SequenceForceBatches(auth, []polygonzkevm.PolygonRollupBaseEtrogBatchData{forceBatchData})
+	_, err = etherman.EtrogZkEVM.SequenceForceBatches(auth, []etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{forceBatchData})
 	require.NoError(t, err)
 	ethBackend.Commit()
 
@@ -292,7 +283,7 @@ func TestSequenceForceBatchesEvent(t *testing.T) {
 	blocks, order, err := etherman.GetRollupInfoByBlockRange(ctx, initBlock.NumberU64(), &finalBlockNumber)
 	require.NoError(t, err)
 	t.Logf("Blocks: %+v", blocks)
-	assert.Equal(t, uint64(15), blocks[1].BlockNumber)
+	assert.Equal(t, uint64(12), blocks[1].BlockNumber)
 	assert.Equal(t, uint64(2), blocks[1].SequencedForceBatches[0][0].BatchNumber)
 	assert.Equal(t, forcedGer, common.BytesToHash(blocks[1].SequencedForceBatches[0][0].ForcedGlobalExitRoot[:]))
 	assert.Equal(t, forcedTimestamp, blocks[1].SequencedForceBatches[0][0].ForcedTimestamp)
@@ -302,7 +293,7 @@ func TestSequenceForceBatchesEvent(t *testing.T) {
 
 func TestSendSequences(t *testing.T) {
 	// Set up testing environment
-	etherman, ethBackend, auth, _, br, da, _ := newTestingEnv(t)
+	etherman, ethBackend, auth, _, br := newTestingEnv()
 
 	// Read currentBlock
 	ctx := context.Background()
@@ -324,12 +315,10 @@ func TestSendSequences(t *testing.T) {
 		BatchL2Data:          batchL2Data,
 		LastL2BLockTimestamp: time.Now().Unix(),
 	}
-	daMessage, _ := hex.DecodeString("0x1234")
 	lastL2BlockTStamp := tx1.Time().Unix()
-	tx, err := etherman.sequenceBatches(*auth, []ethmanTypes.Sequence{sequence}, uint64(lastL2BlockTStamp), uint64(1), auth.From, daMessage)
+	// TODO: fix params
+	tx, err := etherman.sequenceBatches(*auth, []ethmanTypes.Sequence{sequence}, uint64(lastL2BlockTStamp), uint64(1), auth.From)
 	require.NoError(t, err)
-	da.Mock.On("GetBatchL2Data", []uint64{2}, []common.Hash{crypto.Keccak256Hash(batchL2Data)}, daMessage).Return([][]byte{batchL2Data}, nil)
-
 	log.Debug("TX: ", tx.Hash())
 	ethBackend.Commit()
 
@@ -352,7 +341,7 @@ func TestSendSequences(t *testing.T) {
 
 func TestGasPrice(t *testing.T) {
 	// Set up testing environment
-	etherman, _, _, _, _, _, _ := newTestingEnv(t)
+	etherman, _, _, _, _ := newTestingEnv()
 	etherscanM := new(etherscanMock)
 	ethGasStationM := new(ethGasStationMock)
 	etherman.GasProviders.Providers = []ethereum.GasPricer{etherman.EthClient, etherscanM, ethGasStationM}
@@ -371,14 +360,14 @@ func TestGasPrice(t *testing.T) {
 
 func TestErrorEthGasStationPrice(t *testing.T) {
 	// Set up testing environment
-	etherman, _, _, _, _, _, _ := newTestingEnv(t)
+	etherman, _, _, _, _ := newTestingEnv()
 	ethGasStationM := new(ethGasStationMock)
 	etherman.GasProviders.Providers = []ethereum.GasPricer{etherman.EthClient, ethGasStationM}
 	ctx := context.Background()
 
 	ethGasStationM.On("SuggestGasPrice", ctx).Return(big.NewInt(0), fmt.Errorf("error getting gasPrice from ethGasStation"))
 	gp := etherman.GetL1GasPrice(ctx)
-	assert.Equal(t, big.NewInt(1263075579), gp)
+	assert.Equal(t, big.NewInt(1392695906), gp)
 
 	etherscanM := new(etherscanMock)
 	etherman.GasProviders.Providers = []ethereum.GasPricer{etherman.EthClient, etherscanM, ethGasStationM}
@@ -390,7 +379,7 @@ func TestErrorEthGasStationPrice(t *testing.T) {
 
 func TestErrorEtherScanPrice(t *testing.T) {
 	// Set up testing environment
-	etherman, _, _, _, _, _, _ := newTestingEnv(t)
+	etherman, _, _, _, _ := newTestingEnv()
 	etherscanM := new(etherscanMock)
 	ethGasStationM := new(ethGasStationMock)
 	etherman.GasProviders.Providers = []ethereum.GasPricer{etherman.EthClient, etherscanM, ethGasStationM}
@@ -404,7 +393,7 @@ func TestErrorEtherScanPrice(t *testing.T) {
 
 func TestGetForks(t *testing.T) {
 	// Set up testing environment
-	etherman, _, _, _, _, _, _ := newTestingEnv(t)
+	etherman, _, _, _, _ := newTestingEnv()
 	ctx := context.Background()
 	forks, err := etherman.GetForks(ctx, 0, 132)
 	require.NoError(t, err)

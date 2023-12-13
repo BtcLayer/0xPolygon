@@ -77,7 +77,7 @@ func getUpdateHashDB(cliCtx *cli.Context) bool {
 }
 
 func newEtherman(c config.Config) (*etherman.Client, error) {
-	etherman, err := etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config, nil, nil)
+	etherman, err := etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func newState(ctx context.Context, c *config.Config, l2ChainID uint64, forkIDInt
 		stateTree = merkletree.NewStateTree(stateDBClient)
 	}
 
-	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, nil)
+	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, nil, nil)
 	return st
 }
 

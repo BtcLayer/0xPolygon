@@ -15,8 +15,6 @@ const (
 	InvalidParamsErrorCode = -32602
 	// ParserErrorCode error code for parsing errors
 	ParserErrorCode = -32700
-	// AccessDeniedCode error code when requests are denied
-	AccessDeniedCode = -32800
 )
 
 var (

@@ -51,14 +51,14 @@ func approveTokens(ctx *cli.Context) error {
 	setupLog(c.Log)
 
 	// Check if it is already registered
-	etherman, err := newEtherman(*c, nil)
+	etherman, err := newEtherman(*c)
 	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
 	// load auth from keystore file
-	auth, _, err := etherman.LoadAuthFromKeyStore(addrKeyStorePath, addrPassword)
+	auth, err := etherman.LoadAuthFromKeyStore(addrKeyStorePath, addrPassword)
 	if err != nil {
 		log.Fatal(err)
 		return err

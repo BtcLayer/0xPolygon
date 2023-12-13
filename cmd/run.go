@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"net"
@@ -13,14 +12,10 @@ import (
 	"runtime"
 	"time"
 
-	agglayerClient "github.com/0xPolygon/agglayer/client"
-	dataCommitteeClient "github.com/0xPolygon/cdk-data-availability/client"
 	datastreamerlog "github.com/0xPolygonHermez/zkevm-data-streamer/log"
 	"github.com/0xPolygonHermez/zkevm-node"
 	"github.com/0xPolygonHermez/zkevm-node/aggregator"
 	"github.com/0xPolygonHermez/zkevm-node/config"
-	"github.com/0xPolygonHermez/zkevm-node/dataavailability"
-	"github.com/0xPolygonHermez/zkevm-node/dataavailability/datacommittee"
 	"github.com/0xPolygonHermez/zkevm-node/db"
 	"github.com/0xPolygonHermez/zkevm-node/etherman"
 	"github.com/0xPolygonHermez/zkevm-node/ethtxmanager"
@@ -113,26 +108,18 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
+	etherman, err := newEtherman(*c)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// READ CHAIN ID FROM POE SC
-	tmpEthMan, err := etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config, nil, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	l2ChainID, err := tmpEthMan.GetL2ChainID()
+	l2ChainID, err := etherman.GetL2ChainID()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	etherman, err := etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config, nil, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
 	st, currentForkID := newState(cliCtx.Context, c, etherman, l2ChainID, stateSqlDB, eventLog, needsExecutor, needsStateTree, false)
-
-	etherman, err = newEtherman(*c, st)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	c.Aggregator.ChainID = l2ChainID
 	c.Sequencer.StreamServer.ChainID = l2ChainID
@@ -290,86 +277,8 @@ func runMigrations(c db.Config, name string) {
 	}
 }
 
-func newEtherman(c config.Config, st *state.State) (*etherman.Client, error) {
-	ethman, err := etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	da, err := newDataAvailability(c, st, ethman, false)
-	if err != nil {
-		return nil, err
-	}
-	return etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config, da, st)
-}
-
-func newDataAvailability(c config.Config, st *state.State, etherman *etherman.Client, isSequenceSender bool) (*dataavailability.DataAvailability, error) {
-	var (
-		trustedSequencerURL string
-		dataSourcePriority  []dataavailability.DataSourcePriority
-		err                 error
-	)
-	if !c.IsTrustedSequencer {
-		if c.Synchronizer.TrustedSequencerURL != "" {
-			trustedSequencerURL = c.Synchronizer.TrustedSequencerURL
-		} else {
-			log.Debug("getting trusted sequencer URL from smc")
-			trustedSequencerURL, err = etherman.GetTrustedSequencerURL()
-			if err != nil {
-				return nil, fmt.Errorf("error getting trusted sequencer URI. Error: %v", err)
-			}
-		}
-		log.Debug("trustedSequencerURL ", trustedSequencerURL)
-	}
-	zkEVMClient := client.NewClient(trustedSequencerURL)
-
-	dataSourcePriority = c.Synchronizer.L2Synchronization.DataSourcePriority
-	if len(dataSourcePriority) == 0 {
-		dataSourcePriority = dataavailability.DefaultPriority
-	}
-
-	// Backend specific config
-	daProtocolName, err := etherman.GetDAProtocolName()
-	if err != nil {
-		return nil, fmt.Errorf("error getting data availability protocol name: %v", err)
-	}
-	var daBackend dataavailability.DABackender
-	switch daProtocolName {
-	case string(dataavailability.DataAvailabilityCommittee):
-		var (
-			pk  *ecdsa.PrivateKey
-			err error
-		)
-		if isSequenceSender {
-			_, pk, err = etherman.LoadAuthFromKeyStore(c.SequenceSender.PrivateKey.Path, c.SequenceSender.PrivateKey.Password)
-			if err != nil {
-				return nil, err
-			}
-		}
-		dacAddr, err := etherman.GetDAProtocolAddr()
-		if err != nil {
-			return nil, fmt.Errorf("error getting trusted sequencer URI. Error: %v", err)
-		}
-
-		daBackend, err = datacommittee.New(
-			c.Etherman.URL,
-			dacAddr,
-			pk,
-			dataCommitteeClient.NewFactory(),
-		)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("unexpected / unsupported DA protocol: %s", daProtocolName)
-	}
-
-	return dataavailability.New(
-		c.IsTrustedSequencer,
-		daBackend,
-		st,
-		zkEVMClient,
-		dataSourcePriority,
-	)
+func newEtherman(c config.Config) (*etherman.Client, error) {
+	return etherman.NewClient(c.Etherman, c.NetworkConfig.L1Config)
 }
 
 func newL2EthClient(url string) (*ethclient.Client, error) {
@@ -412,7 +321,7 @@ func runSynchronizer(cfg config.Config, etherman *etherman.Client, ethTxManagerS
 	// If synchronizer are using sequential mode, we only need one etherman client
 	if cfg.Synchronizer.L1SynchronizationMode == synchronizer.ParallelMode {
 		for i := 0; i < int(cfg.Synchronizer.L1ParallelSynchronization.MaxClients+1); i++ {
-			eth, err := newEtherman(cfg, st)
+			eth, err := newEtherman(cfg)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -517,12 +426,12 @@ func createSequencer(cfg config.Config, pool *pool.Pool, st *state.State, etherm
 }
 
 func createSequenceSender(cfg config.Config, pool *pool.Pool, etmStorage *ethtxmanager.PostgresStorage, st *state.State, eventLog *event.EventLog) *sequencesender.SequenceSender {
-	etherman, err := newEtherman(cfg, st)
+	etherman, err := newEtherman(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	auth, _, err := etherman.LoadAuthFromKeyStore(cfg.SequenceSender.PrivateKey.Path, cfg.SequenceSender.PrivateKey.Password)
+	auth, err := etherman.LoadAuthFromKeyStore(cfg.SequenceSender.PrivateKey.Path, cfg.SequenceSender.PrivateKey.Password)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -532,12 +441,7 @@ func createSequenceSender(cfg config.Config, pool *pool.Pool, etmStorage *ethtxm
 
 	ethTxManager := ethtxmanager.New(cfg.EthTxManager, etherman, etmStorage, st)
 
-	da, err := newDataAvailability(cfg, st, etherman, true)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	seqSender, err := sequencesender.New(cfg.SequenceSender, st, etherman, ethTxManager, eventLog, da)
+	seqSender, err := sequencesender.New(cfg.SequenceSender, st, etherman, ethTxManager, eventLog)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -546,23 +450,7 @@ func createSequenceSender(cfg config.Config, pool *pool.Pool, etmStorage *ethtxm
 }
 
 func runAggregator(ctx context.Context, c aggregator.Config, etherman *etherman.Client, ethTxManager *ethtxmanager.Client, st *state.State) {
-	var (
-		aggCli *agglayerClient.Client
-		pk     *ecdsa.PrivateKey
-		err    error
-	)
-
-	if c.SettlementBackend == aggregator.AggLayer {
-		aggCli = agglayerClient.New(c.AggLayerURL)
-
-		// Load private key
-		pk, err = config.NewKeyFromKeystore(c.SequencerPrivateKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	agg, err := aggregator.New(c, st, ethTxManager, etherman, aggCli, pk)
+	agg, err := aggregator.New(c, st, ethTxManager, etherman)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -624,22 +512,29 @@ func newState(ctx context.Context, c *config.Config, etherman *etherman.Client, 
 		AvoidForkIDInMemory:          avoidForkIDInMemory,
 	}
 	stateDb := pgstatestorage.NewPostgresStorage(stateCfg, sqlDB)
-	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, nil)
+
+	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, nil, nil)
 	// This is to force to build cache, and check that DB is ok before starting the application
-	l1inforoot, err := st.GetCurrentL1InfoRoot(ctx, nil)
+	l1InfoRoot, err := st.GetCurrentL1InfoRoot(ctx, nil)
 	if err != nil {
 		log.Fatal("error getting current L1InfoRoot. Error: ", err)
 	}
-	log.Infof("Starting L1InfoRoot: %v", l1inforoot.String())
+	log.Infof("Starting L1InfoRoot: %v", l1InfoRoot.String())
 
-	forkIDIntervals, err := forkIDIntervals(ctx, st, etherman, c.NetworkConfig.Genesis.RollupBlockNumber)
+	l1InfoTreeRecursiveRoot, err := st.GetCurrentL1InfoTreeRecursiveRoot(ctx, nil)
+	if err != nil {
+		log.Fatal("error getting current l1InfoTreeRecursiveRoot. Error: ", err)
+	}
+	log.Infof("Starting l1InfoTreeRecursiveRoot: %v", l1InfoTreeRecursiveRoot.String())
+
+	forkIDIntervals, err := forkIDIntervals(ctx, st, etherman, c.NetworkConfig.Genesis.BlockNumber)
 	if err != nil {
 		log.Fatal("error getting forkIDs. Error: ", err)
 	}
 	st.UpdateForkIDIntervalsInMemory(forkIDIntervals)
 
 	currentForkID := forkIDIntervals[len(forkIDIntervals)-1].ForkId
-	log.Infof("Fork ID read from POE SC = %v", currentForkID)
+	log.Infof("Fork ID read from POE SC = %v", forkIDIntervals[len(forkIDIntervals)-1].ForkId)
 
 	return st, currentForkID
 }
@@ -655,13 +550,13 @@ func createPool(cfgPool pool.Config, constraintsCfg state.BatchConstraintsCfg, l
 }
 
 func createEthTxManager(cfg config.Config, etmStorage *ethtxmanager.PostgresStorage, st *state.State) *ethtxmanager.Client {
-	etherman, err := newEtherman(cfg, st)
+	etherman, err := newEtherman(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, privateKey := range cfg.EthTxManager.PrivateKeys {
-		_, _, err := etherman.LoadAuthFromKeyStore(privateKey.Path, privateKey.Password)
+		_, err := etherman.LoadAuthFromKeyStore(privateKey.Path, privateKey.Password)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -753,7 +648,8 @@ func forkIDIntervals(ctx context.Context, st *state.State, etherman *etherman.Cl
 		if err != nil && !errors.Is(err, state.ErrStateNotSynchronized) {
 			return []state.ForkIDInterval{}, fmt.Errorf("error checking lastL1BlockSynced. Error: %v", err)
 		}
-		if lastBlock != nil {
+		// If lastBlock is below genesisBlock means state.ErrStateNotSynchronized (haven't started yet the sync process, is doing pregenesis sync)
+		if lastBlock != nil && lastBlock.BlockNumber > genesisBlockNumber {
 			log.Info("Getting forkIDs intervals. Please wait...")
 			// Read Fork ID FROM POE SC
 			forkIntervals, err := etherman.GetForks(ctx, genesisBlockNumber, lastBlock.BlockNumber)
@@ -793,32 +689,14 @@ func forkIDIntervals(ctx context.Context, st *state.State, etherman *etherman.Cl
 			}
 			forkIDIntervals = forkIntervals
 		} else {
-			log.Debug("Getting all forkIDs")
-
-			// Get last L1 block number
-			bn, err := etherman.GetLatestBlockNumber(ctx)
-			if err != nil {
-				return []state.ForkIDInterval{}, fmt.Errorf("error getting latest block number. Error: %v", err)
-			}
-
-			// Get all forkIDs since genesis
-			forkIntervals, err := etherman.GetForks(ctx, genesisBlockNumber, bn)
+			log.Debug("Getting initial forkID")
+			forkIntervals, err := etherman.GetForks(ctx, genesisBlockNumber, genesisBlockNumber)
 			if err != nil {
 				return []state.ForkIDInterval{}, fmt.Errorf("error getting forks. Please check the configuration. Error: %v", err)
 			} else if len(forkIntervals) == 0 {
 				return []state.ForkIDInterval{}, fmt.Errorf("error: no forkID received. It should receive at least one, please check the configuration...")
 			}
 			forkIDIntervals = forkIntervals
-
-			log.Debugf("Retrieved %d forkIDs", len(forkIDIntervals))
-
-			log.Debug("Adding forkIDs to db and memory")
-			for _, forkID := range forkIDIntervals {
-				err = st.AddForkIDInterval(ctx, forkID, nil)
-				if err != nil {
-					log.Fatal("error adding forkID to db. Error: ", err)
-				}
-			}
 		}
 	}
 	return forkIDIntervals, nil

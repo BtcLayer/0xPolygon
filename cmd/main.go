@@ -47,7 +47,7 @@ var (
 	networkFlag = cli.StringFlag{
 		Name:     config.FlagNetwork,
 		Aliases:  []string{"net"},
-		Usage:    "Load default network configuration. Supported values: [`custom`]",
+		Usage:    "Load default network configuration. Supported values: [`mainnet`, `testnet`, `cardona`, `custom`]",
 		Required: true,
 	}
 	customNetworkFlag = cli.StringFlag{
@@ -185,13 +185,6 @@ func main() {
 			Usage:   "Restore snapshot of the state db",
 			Action:  restore,
 			Flags:   restoreFlags,
-		},
-		{
-			Name:    "set-data-availability-protocol",
-			Aliases: []string{"set-dap"},
-			Usage:   "Sets the new data availability protocol",
-			Action:  setDataAvailabilityProtocol,
-			Flags:   setDataAvailabilityProtocolFlags,
 		},
 	}
 

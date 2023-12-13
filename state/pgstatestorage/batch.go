@@ -2,7 +2,6 @@ package pgstatestorage
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -798,7 +797,7 @@ func (p *PostgresStorage) GetVirtualBatchToProve(ctx context.Context, lastVerfie
 			b.batch_num > $1 AND b.batch_num = v.batch_num AND
 			v.block_num <= $2 AND
 			NOT EXISTS (
-				SELECT p.batch_num FROM state.proof p 
+				SELECT p.batch_num FROM state.batch_proof p 
 				WHERE v.batch_num >= p.batch_num AND v.batch_num <= p.batch_num_final
 			)
 		ORDER BY b.batch_num ASC LIMIT 1
@@ -975,27 +974,8 @@ func (p *PostgresStorage) GetBlockNumVirtualBatchByBatchNum(ctx context.Context,
 	return blockNum, nil
 }
 
-// BuildChangeL2Block returns a changeL2Block tx to use in the BatchL2Data
-func (p *PostgresStorage) BuildChangeL2Block(deltaTimestamp uint32, l1InfoTreeIndex uint32) []byte {
-	changeL2BlockMark := []byte{0x0B}
-	changeL2Block := []byte{}
-
-	// changeL2Block transaction mark
-	changeL2Block = append(changeL2Block, changeL2BlockMark...)
-	// changeL2Block deltaTimeStamp
-	deltaTimestampBytes := make([]byte, 4) //nolint:gomnd
-	binary.BigEndian.PutUint32(deltaTimestampBytes, deltaTimestamp)
-	changeL2Block = append(changeL2Block, deltaTimestampBytes...)
-	// changeL2Block l1InfoTreeIndexBytes
-	l1InfoTreeIndexBytes := make([]byte, 4) //nolint:gomnd
-	binary.BigEndian.PutUint32(l1InfoTreeIndexBytes, l1InfoTreeIndex)
-	changeL2Block = append(changeL2Block, l1InfoTreeIndexBytes...)
-
-	return changeL2Block
-}
-
 // GetRawBatchTimestamps returns the timestamp of the batch with the given number.
-// it returns batch_num.tstamp and virtual_batch.batch_timestamp
+// it returns batch.timestamp and virtual_batch.timestamp_batch_etrog
 func (p *PostgresStorage) GetRawBatchTimestamps(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) (*time.Time, *time.Time, error) {
 	const sql = `
 	SELECT b.timestamp AS batch_timestamp, v.timestamp_batch_etrog AS virtual_batch_timestamp
@@ -1091,12 +1071,4 @@ func (p *PostgresStorage) GetNotCheckedBatches(ctx context.Context, dbTx pgx.Tx)
 	}
 
 	return batches, nil
-}
-
-// UpdateBatchTimestamp updates the timestamp of the state.batch with the given number.
-func (p *PostgresStorage) UpdateBatchTimestamp(ctx context.Context, batchNumber uint64, timestamp time.Time, dbTx pgx.Tx) error {
-	const sql = "UPDATE state.batch SET timestamp = $1 WHERE batch_num = $2"
-	e := p.getExecQuerier(dbTx)
-	_, err := e.Exec(ctx, sql, timestamp.UTC(), batchNumber)
-	return err
 }

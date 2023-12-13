@@ -7,14 +7,8 @@ import (
 
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
-)
-
-const (
-	// ExecutionMode0 is the execution mode for the sequencer and RPC, default one
-	ExecutionMode0 = uint64(0)
-	// ExecutionMode1 is the execution mode for the synchronizer
-	ExecutionMode1 = uint64(1)
 )
 
 // NewExecutorClient is the executor client constructor.
@@ -22,11 +16,11 @@ func NewExecutorClient(ctx context.Context, c Config) (ExecutorServiceClient, *g
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(c.MaxGRPCMessageSize)),
-		grpc.WithBlock(),
 	}
-	const maxWaitSeconds = 120
+	const maxWaitSeconds = 20
 	const maxRetries = 5
-	ctx, cancel := context.WithTimeout(ctx, maxWaitSeconds*time.Second)
+	var innerCtx context.Context
+	var cancel context.CancelFunc
 
 	connectionRetries := 0
 
@@ -34,8 +28,15 @@ func NewExecutorClient(ctx context.Context, c Config) (ExecutorServiceClient, *g
 	var err error
 	delay := 2
 	for connectionRetries < maxRetries {
+		innerCtx, cancel = context.WithTimeout(ctx, maxWaitSeconds*time.Second)
+		executorConn, err = grpc.NewClient(c.URI, opts...)
+		if err != nil {
+			log.Fatalf("fail to create grpc connection to merkletree: %v", err)
+		}
+
 		log.Infof("trying to connect to executor: %v", c.URI)
-		executorConn, err = grpc.DialContext(ctx, c.URI, opts...)
+		executorConn.Connect()
+		err = waitForConnection(innerCtx, executorConn)
 		if err != nil {
 			log.Infof("Retrying connection to executor #%d", connectionRetries)
 			time.Sleep(time.Duration(delay) * time.Second)
@@ -55,4 +56,18 @@ func NewExecutorClient(ctx context.Context, c Config) (ExecutorServiceClient, *g
 	}
 	executorClient := NewExecutorServiceClient(executorConn)
 	return executorClient, executorConn, cancel
+}
+
+func waitForConnection(ctx context.Context, conn *grpc.ClientConn) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+			s := conn.GetState()
+			if s == connectivity.Ready {
+				return nil
+			}
+		}
+	}
 }

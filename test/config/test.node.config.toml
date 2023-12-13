@@ -126,11 +126,12 @@ StateConsistencyCheckInterval = "5s"
 	[Sequencer.StreamServer]
 		Port = 6900
 		Filename = "/datastreamer/datastream.bin"
-		Version = 1
+		Version = 4
 		ChainID = 1337
 		WriteTimeout = "5s"
+		InactivityTimeout = "120s"
+		InactivityCheckInterval = "5s"		
 		Enabled = true
-		
 
 [SequenceSender]
 WaitPeriodSendSequence = "15s"
@@ -156,10 +157,6 @@ CleanupLockedProofsInterval = "2m"
 GeneratingProofCleanupThreshold = "10m"
 UpgradeEtrogBatchNumber = 0
 BatchProofL1BlockConfirmations = 2
-SettlementBackend = "l1"
-AggLayerTxTimeout = "5m"
-AggLayerURL = ""
-SequencerPrivateKey = {}
 
 [EthTxManager]
 ForcedGas = 0

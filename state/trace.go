@@ -78,15 +78,7 @@ func (s *State) DebugTransaction(ctx context.Context, transactionHash common.Has
 	var effectivePercentage []uint8
 	for i := 0; i <= count; i++ {
 		txsToEncode = append(txsToEncode, *l2Block.Transactions()[i])
-		txGasPrice := tx.GasPrice()
-		effectiveGasPrice := receipt.EffectiveGasPrice
-		egpPercentage, err := CalculateEffectiveGasPricePercentage(txGasPrice, effectiveGasPrice)
-		if errors.Is(err, ErrEffectiveGasPriceEmpty) {
-			egpPercentage = MaxEffectivePercentage
-		} else if err != nil {
-			return nil, err
-		}
-		effectivePercentage = append(effectivePercentage, egpPercentage)
+		effectivePercentage = append(effectivePercentage, MaxEffectivePercentage)
 		log.Debugf("trace will reprocess tx: %v", l2Block.Transactions()[i].Hash().String())
 	}
 
@@ -315,7 +307,7 @@ func (s *State) DebugTransaction(ctx context.Context, transactionHash common.Has
 			return nil, err
 		} else if processBatchResponseV2.Error != executor.ExecutorError_EXECUTOR_ERROR_NO_ERROR {
 			err = executor.ExecutorErr(processBatchResponseV2.Error)
-			s.eventLog.LogExecutorErrorV2(ctx, processBatchResponseV2.Error, processBatchRequestV2)
+			s.eventLog.LogExecutorError(ctx, processBatchResponseV2.Error, processBatchRequestV2)
 			return nil, err
 		}
 

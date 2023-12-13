@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/0xPolygonHermez/zkevm-node/etherman"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/0xPolygonHermez/zkevm-node/merkletree"
 	"github.com/0xPolygonHermez/zkevm-node/state"
 	"github.com/ethereum/go-ethereum/common"
@@ -13,6 +14,18 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func TestCardona(t *testing.T) {
+	cfg := Config{}
+	fs := flag.NewFlagSet("", flag.ExitOnError)
+	fs.String(FlagNetwork, string(cardona), string(cardona))
+	err := fs.Set(FlagNetwork, string(cardona))
+	require.NoError(t, err)
+	app := cli.NewApp()
+	ctx := cli.NewContext(app, fs, nil)
+
+	log.Info("flag=", ctx.String(FlagNetwork))
+	cfg.loadNetworkConfig(ctx)
+}
 func TestLoadCustomNetworkConfig(t *testing.T) {
 	tcs := []struct {
 		description      string
@@ -24,8 +37,7 @@ func TestLoadCustomNetworkConfig(t *testing.T) {
 			description: "happy path",
 			inputConfigStr: `{
 				"root": "0xBEEF",
-				"rollupCreationBlockNumber": 69,
-				"rollupManagerCreationBlockNumber": 60,
+				"genesisBlockNumber": 69,
 				"l1Config" : {
 					"chainId": 420,
 					"polygonZkEVMAddress": "0xc949254d682d8c9ad5682521675b8f43b102aec4",
@@ -77,9 +89,8 @@ func TestLoadCustomNetworkConfig(t *testing.T) {
 					GlobalExitRootManagerAddr: common.HexToAddress("0xc949254d682d8c9ad5682521675b8f43b102aec4"),
 				},
 				Genesis: state.Genesis{
-					Root:                     common.HexToHash("0xBEEF"),
-					RollupBlockNumber:        69,
-					RollupManagerBlockNumber: 60,
+					Root:        common.HexToHash("0xBEEF"),
+					BlockNumber: 69,
 					Actions: []*state.GenesisAction{
 						{
 							Address: "0xc949254d682d8c9ad5682521675b8f43b102aec4",

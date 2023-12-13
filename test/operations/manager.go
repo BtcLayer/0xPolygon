@@ -46,7 +46,6 @@ const (
 	DefaultL1ZkEVMSmartContract                = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
 	DefaultL1RollupManagerSmartContract        = "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
 	DefaultL1PolSmartContract                  = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-	DefaultL1DataCommitteeContract             = "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE"
 	DefaultL1NetworkURL                        = "http://localhost:8545"
 	DefaultL1NetworkWebSocketURL               = "ws://localhost:8546"
 	DefaultL1ChainID                    uint64 = 1337
@@ -264,6 +263,7 @@ func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.Transa
 	if confirmationLevel == PoolConfirmationLevel {
 		return nil, nil
 	}
+
 	l2BlockNumbers := make([]*big.Int, 0, len(sentTxs))
 	for _, tx := range sentTxs {
 		// check transaction nonce against transaction reported L2 block number
@@ -503,7 +503,11 @@ func initState(cfg state.Config) (*state.State, error) {
 	if err != nil {
 		panic(err)
 	}
-	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, mt)
+	mtr, err := l1infotree.NewL1InfoTreeRecursive(32)
+	if err != nil {
+		panic(err)
+	}
+	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, mt, mtr)
 	return st, nil
 }
 
@@ -661,24 +665,4 @@ func initOrResetDB() {
 	if err := dbutils.InitOrResetPool(poolDBCfg); err != nil {
 		panic(err)
 	}
-}
-
-// StartDACDB starts the data availability node DB
-func (m *Manager) StartDACDB() error {
-	return StartComponent("dac-db", func() (bool, error) { return true, nil })
-}
-
-// StopDACDB stops the data availability node DB
-func (m *Manager) StopDACDB() error {
-	return StopComponent("dac-db")
-}
-
-// StartPermissionlessNodeForcedToSYncThroughDAC starts a permissionless node that is froced to sync through the DAC
-func (m *Manager) StartPermissionlessNodeForcedToSYncThroughDAC() error {
-	return StartComponent("permissionless-dac", func() (bool, error) { return true, nil })
-}
-
-// StopPermissionlessNodeForcedToSYncThroughDAC stops the permissionless node that is froced to sync through the DAC
-func (m *Manager) StopPermissionlessNodeForcedToSYncThroughDAC() error {
-	return StopComponent("permissionless-dac")
 }

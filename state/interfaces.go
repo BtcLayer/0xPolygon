@@ -103,14 +103,14 @@ type storage interface {
 	GetSequences(ctx context.Context, lastVerifiedBatchNumber uint64, dbTx pgx.Tx) ([]Sequence, error)
 	GetVirtualBatchToProve(ctx context.Context, lastVerfiedBatchNumber uint64, maxL1Block uint64, dbTx pgx.Tx) (*Batch, error)
 	CheckProofContainsCompleteSequences(ctx context.Context, proof *Proof, dbTx pgx.Tx) (bool, error)
-	GetProofReadyToVerify(ctx context.Context, lastVerfiedBatchNumber uint64, dbTx pgx.Tx) (*Proof, error)
-	GetProofsToAggregate(ctx context.Context, dbTx pgx.Tx) (*Proof, *Proof, error)
-	AddGeneratedProof(ctx context.Context, proof *Proof, dbTx pgx.Tx) error
-	UpdateGeneratedProof(ctx context.Context, proof *Proof, dbTx pgx.Tx) error
-	DeleteGeneratedProofs(ctx context.Context, batchNumber uint64, batchNumberFinal uint64, dbTx pgx.Tx) error
-	CleanupGeneratedProofs(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) error
-	CleanupLockedProofs(ctx context.Context, duration string, dbTx pgx.Tx) (int64, error)
-	DeleteUngeneratedProofs(ctx context.Context, dbTx pgx.Tx) error
+	GetProofReadyForFinal(ctx context.Context, lastVerfiedBatchNumber uint64, dbTx pgx.Tx) (*Proof, error)
+	GetBatchProofsToAggregate(ctx context.Context, dbTx pgx.Tx) (*Proof, *Proof, error)
+	AddBatchProof(ctx context.Context, proof *Proof, dbTx pgx.Tx) error
+	UpdateBatchProof(ctx context.Context, proof *Proof, dbTx pgx.Tx) error
+	DeleteBatchProofs(ctx context.Context, batchNumber uint64, batchNumberFinal uint64, dbTx pgx.Tx) error
+	CleanupBatchProofs(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) error
+	CleanupLockedBatchProofs(ctx context.Context, duration string, dbTx pgx.Tx) (int64, error)
+	DeleteUngeneratedBatchProofs(ctx context.Context, dbTx pgx.Tx) error
 	GetLastClosedBatch(ctx context.Context, dbTx pgx.Tx) (*Batch, error)
 	GetLastClosedBatchNumber(ctx context.Context, dbTx pgx.Tx) (uint64, error)
 	UpdateBatchL2Data(ctx context.Context, batchNumber uint64, batchL2Data []byte, dbTx pgx.Tx) error
@@ -145,7 +145,6 @@ type storage interface {
 	GetForkIDByBlockNumber(blockNumber uint64) uint64
 	GetForkIDByBatchNumber(batchNumber uint64) uint64
 	GetLatestIndex(ctx context.Context, dbTx pgx.Tx) (uint32, error)
-	BuildChangeL2Block(deltaTimestamp uint32, l1InfoTreeIndex uint32) []byte
 	GetRawBatchTimestamps(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) (*time.Time, *time.Time, error)
 	GetL1InfoRootLeafByL1InfoRoot(ctx context.Context, l1InfoRoot common.Hash, dbTx pgx.Tx) (L1InfoTreeExitRootStorageEntry, error)
 	GetL1InfoRootLeafByIndex(ctx context.Context, l1InfoTreeIndex uint32, dbTx pgx.Tx) (L1InfoTreeExitRootStorageEntry, error)
@@ -153,9 +152,6 @@ type storage interface {
 	GetBlockByNumber(ctx context.Context, blockNumber uint64, dbTx pgx.Tx) (*Block, error)
 	GetVirtualBatchParentHash(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) (common.Hash, error)
 	GetForcedBatchParentHash(ctx context.Context, forcedBatchNumber uint64, dbTx pgx.Tx) (common.Hash, error)
-	GetBatchL2DataByNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) ([]byte, error)
-	GetBatchL2DataByNumbers(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error)
-	GetForcedBatchDataByNumbers(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error)
 	GetLatestBatchGlobalExitRoot(ctx context.Context, dbTx pgx.Tx) (common.Hash, error)
 	GetL2TxHashByTxHash(ctx context.Context, hash common.Hash, dbTx pgx.Tx) (*common.Hash, error)
 	GetSyncInfoData(ctx context.Context, dbTx pgx.Tx) (SyncInfoDataOnStorage, error)
@@ -166,5 +162,20 @@ type storage interface {
 	GetNotCheckedBatches(ctx context.Context, dbTx pgx.Tx) ([]*Batch, error)
 	GetLastL2BlockByBatchNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) (*L2Block, error)
 	GetPreviousBlockToBlockNumber(ctx context.Context, blockNumber uint64, dbTx pgx.Tx) (*Block, error)
-	UpdateBatchTimestamp(ctx context.Context, batchNumber uint64, timestamp time.Time, dbTx pgx.Tx) error
+	AddL1InfoTreeRecursiveRootToExitRoot(ctx context.Context, exitRoot *L1InfoTreeRecursiveExitRootStorageEntry, dbTx pgx.Tx) error
+	GetAllL1InfoTreeRecursiveRootEntries(ctx context.Context, dbTx pgx.Tx) ([]L1InfoTreeRecursiveExitRootStorageEntry, error)
+	GetLatestL1InfoTreeRecursiveRoot(ctx context.Context, maxBlockNumber uint64, dbTx pgx.Tx) (L1InfoTreeRecursiveExitRootStorageEntry, error)
+	GetL1InfoRecursiveRootLeafByIndex(ctx context.Context, l1InfoTreeIndex uint32, dbTx pgx.Tx) (L1InfoTreeExitRootStorageEntry, error)
+
+	storeblobsequences
+	storeblobinner
+}
+
+type storeblobsequences interface {
+	AddBlobSequence(ctx context.Context, blobSequence *BlobSequence, dbTx pgx.Tx) error
+	GetLastBlobSequence(ctx context.Context, dbTx pgx.Tx) (*BlobSequence, error)
+}
+
+type storeblobinner interface {
+	AddBlobInner(ctx context.Context, blobInner *BlobInner, dbTx pgx.Tx) error
 }

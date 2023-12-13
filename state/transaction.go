@@ -252,7 +252,6 @@ func (s *State) StoreL2Block(ctx context.Context, batchNumber uint64, l2Block *P
 	imStateRoots := make([]common.Hash, 0, numTxs)
 	var receipt *types.Receipt
 
-	txIndex := 0
 	for i, txResponse := range l2Block.TransactionResponses {
 		// if the transaction has an intrinsic invalid tx error it means
 		// the transaction has not changed the state, so we don't store it
@@ -272,10 +271,9 @@ func (s *State) StoreL2Block(ctx context.Context, batchNumber uint64, l2Block *P
 
 		storeTxsEGPData = append(storeTxsEGPData, storeTxEGPData)
 
-		receipt = GenerateReceipt(header.Number, txResponse, uint(txIndex), forkID)
+		receipt = GenerateReceipt(header.Number, txResponse, uint(i), forkID)
 		receipts = append(receipts, receipt)
 		imStateRoots = append(imStateRoots, txResp.StateRoot)
-		txIndex++
 	}
 
 	// Create block to be able to calculate its hash
@@ -546,7 +544,6 @@ func (s *State) internalProcessUnsignedTransactionV2(ctx context.Context, tx *ty
 		TimestampLimit:         l2Block.Time(),
 		SkipFirstChangeL2Block: cFalse,
 		SkipWriteBlockInfoRoot: cTrue,
-		ExecutionMode:          executor.ExecutionMode0,
 	}
 	if noZKEVMCounters {
 		processBatchRequestV2.NoCounters = cTrue
@@ -611,7 +608,7 @@ func (s *State) internalProcessUnsignedTransactionV2(ctx context.Context, tx *ty
 
 	if err == nil && processBatchResponseV2.Error != executor.ExecutorError_EXECUTOR_ERROR_NO_ERROR {
 		err = executor.ExecutorErr(processBatchResponseV2.Error)
-		s.eventLog.LogExecutorErrorV2(ctx, processBatchResponseV2.Error, processBatchRequestV2)
+		s.eventLog.LogExecutorError(ctx, processBatchResponseV2.Error, processBatchRequestV2)
 		return nil, err
 	}
 
@@ -1056,7 +1053,6 @@ func (s *State) internalTestGasEstimationTransactionV2(ctx context.Context, batc
 		TimestampLimit:         uint64(time.Now().Unix()),
 		SkipFirstChangeL2Block: cTrue,
 		SkipWriteBlockInfoRoot: cTrue,
-		ExecutionMode:          executor.ExecutionMode0,
 	}
 
 	log.Debugf("EstimateGas[processBatchRequestV2.From]: %v", processBatchRequestV2.From)
@@ -1083,7 +1079,7 @@ func (s *State) internalTestGasEstimationTransactionV2(ctx context.Context, batc
 	}
 	if processBatchResponseV2.Error != executor.ExecutorError_EXECUTOR_ERROR_NO_ERROR {
 		err = executor.ExecutorErr(processBatchResponseV2.Error)
-		s.eventLog.LogExecutorErrorV2(ctx, processBatchResponseV2.Error, processBatchRequestV2)
+		s.eventLog.LogExecutorError(ctx, processBatchResponseV2.Error, processBatchRequestV2)
 		return nil, err
 	}
 	if processBatchResponseV2.ErrorRom != executor.RomError_ROM_ERROR_NO_ERROR {

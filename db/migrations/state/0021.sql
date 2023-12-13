@@ -5,3 +5,4 @@ ALTER TABLE state.batch
 -- +migrate Down
 ALTER TABLE state.batch
     DROP COLUMN high_reserved_counters;
+    

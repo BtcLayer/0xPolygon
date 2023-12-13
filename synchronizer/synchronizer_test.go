@@ -9,7 +9,7 @@ import (
 
 	cfgTypes "github.com/0xPolygonHermez/zkevm-node/config/types"
 	"github.com/0xPolygonHermez/zkevm-node/etherman"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/etrogpolygonzkevm"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
 	"github.com/0xPolygonHermez/zkevm-node/state"
 	"github.com/0xPolygonHermez/zkevm-node/state/metrics"
@@ -32,6 +32,7 @@ const (
 	ETROG_MODE_FLAG                = true
 	RETRIEVE_BATCH_FROM_DB_FLAG    = true
 	RETRIEVE_BATCH_FROM_CACHE_FLAG = false
+	PROCESS_BATCH_SELECTOR_ENABLED = false
 )
 
 type mocks struct {
@@ -123,7 +124,7 @@ func TestGivenPermissionlessNodeWhenSyncronizeFirstTimeABatchThenStoreItInALocal
 // but it used a feature that is not implemented in new one that is asking beyond the last block on L1
 func TestForcedBatchEtrog(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(123456),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -173,6 +174,7 @@ func TestForcedBatchEtrog(t *testing.T) {
 				On("GetForkIDByBatchNumber", mock.Anything).
 				Return(uint64(7), nil).
 				Maybe()
+
 			m.State.
 				On("GetLastBlock", ctx, m.DbTx).
 				Return(lastBlock0, nil).
@@ -228,7 +230,7 @@ func TestForcedBatchEtrog(t *testing.T) {
 				Coinbase:      common.HexToAddress("0x222"),
 				SequencerAddr: common.HexToAddress("0x00"),
 				TxHash:        common.HexToHash("0x333"),
-				PolygonRollupBaseEtrogBatchData: &polygonzkevm.PolygonRollupBaseEtrogBatchData{
+				PolygonRollupBaseEtrogBatchData: &etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{
 					Transactions:         []byte{},
 					ForcedGlobalExitRoot: [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 					ForcedTimestamp:      uint64(t.Unix()),
@@ -372,8 +374,6 @@ func TestForcedBatchEtrog(t *testing.T) {
 				Return(nil).
 				Once()
 
-			m.State.EXPECT().UpdateBatchTimestamp(ctx, sequencedBatch.BatchNumber, fb[0].ForcedAt, m.DbTx).Return(nil)
-
 			m.State.
 				On("AddAccumulatedInputHash", ctx, sequencedBatch.BatchNumber, common.Hash{}, m.DbTx).
 				Return(nil).
@@ -401,7 +401,7 @@ func TestForcedBatchEtrog(t *testing.T) {
 // but it used a feature that is not implemented in new one that is asking beyond the last block on L1
 func TestSequenceForcedBatchIncaberry(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(123456),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -494,7 +494,7 @@ func TestSequenceForcedBatchIncaberry(t *testing.T) {
 				BatchNumber: uint64(2),
 				Coinbase:    common.HexToAddress("0x222"),
 				TxHash:      common.HexToHash("0x333"),
-				PolygonRollupBaseEtrogBatchData: polygonzkevm.PolygonRollupBaseEtrogBatchData{
+				PolygonRollupBaseEtrogBatchData: etrogpolygonzkevm.PolygonRollupBaseEtrogBatchData{
 					Transactions:         []byte{},
 					ForcedGlobalExitRoot: [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 					ForcedTimestamp:      1000, //ForcedBatch
@@ -663,7 +663,7 @@ func TestSequenceForcedBatchIncaberry(t *testing.T) {
 
 func setupGenericTest(t *testing.T) (*state.Genesis, *Config, *mocks) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(123456),
+		BlockNumber: uint64(123456),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -768,9 +768,11 @@ func createBatchL2DataEtrog(howManyBlocks int, howManyTx int) ([]byte, []types.T
 	transactions := []types.TransactionOrHash{}
 	for nBlock := 0; nBlock < howManyBlocks; nBlock++ {
 		block := state.L2BlockRaw{
-			DeltaTimestamp:  123,
-			IndexL1InfoTree: 456,
-			Transactions:    []state.L2TxRaw{},
+			ChangeL2BlockHeader: state.ChangeL2BlockHeader{
+				DeltaTimestamp:  123,
+				IndexL1InfoTree: 456,
+			},
+			Transactions: []state.L2TxRaw{},
 		}
 		for i := 0; i < howManyTx; i++ {
 			tx := createTransaction(uint64(i + 1))
@@ -930,7 +932,7 @@ func expectedCallsForsyncTrustedState(t *testing.T, m *mocks, sync *ClientSynchr
 
 func TestReorg(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(0),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -1253,7 +1255,7 @@ func TestReorg(t *testing.T) {
 
 func TestLatestSyncedBlockEmpty(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(0),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -1470,7 +1472,7 @@ func TestLatestSyncedBlockEmpty(t *testing.T) {
 
 func TestRegularReorg(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(0),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -1755,7 +1757,7 @@ func TestRegularReorg(t *testing.T) {
 
 func TestLatestSyncedBlockEmptyWithExtraReorg(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(0),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -2034,7 +2036,7 @@ func TestLatestSyncedBlockEmptyWithExtraReorg(t *testing.T) {
 
 func TestCallFromEmptyBlockAndReorg(t *testing.T) {
 	genesis := state.Genesis{
-		RollupBlockNumber: uint64(0),
+		BlockNumber: uint64(0),
 	}
 	cfg := Config{
 		SyncInterval:          cfgTypes.Duration{Duration: 1 * time.Second},
@@ -2151,11 +2153,6 @@ func TestCallFromEmptyBlockAndReorg(t *testing.T) {
 				On("HeaderByNumber", mock.Anything, n).
 				Return(ethHeader2bis, nil).
 				Once()
-
-			// m.Etherman.
-			// 	On("EthBlockByNumber", ctx, lastBlock1.BlockNumber).
-			// 	Return(ethBlock1, nil).
-			// 	Once()
 
 			ti := time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC)
 
