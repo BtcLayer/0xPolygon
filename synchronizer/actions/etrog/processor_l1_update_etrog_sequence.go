@@ -38,9 +38,9 @@ func NewProcessorL1UpdateEtrogSequence(state stateProcessUpdateEtrogSequence,
 	sync syncProcessUpdateEtrogSequenceInterface,
 	timeProvider syncCommon.TimeProvider) *ProcessorL1UpdateEtrogSequence {
 	return &ProcessorL1UpdateEtrogSequence{
-		ProcessorBase: *actions.NewProcessorBase[ProcessorL1UpdateEtrogSequence](
-			[]etherman.EventOrder{etherman.UpdateEtrogSequenceOrder},
-			actions.ForksIdOnlyEtrog),
+		ProcessorBase: actions.ProcessorBase[ProcessorL1UpdateEtrogSequence]{
+			SupportedEvent:    []etherman.EventOrder{etherman.UpdateEtrogSequenceOrder},
+			SupportedForkdIds: &actions.ForksIdOnlyEtrog},
 		state:        state,
 		sync:         sync,
 		timeProvider: timeProvider,

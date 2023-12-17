@@ -64,11 +64,6 @@
 					"description": "URL is the URL of the Ethereum node for L1",
 					"default": "http://localhost:8545"
 				},
-				"ConsensusL1URL": {
-					"type": "string",
-					"description": "ConsensusL1URL is the URL of the consensus L1 RPC endpoint",
-					"default": ""
-				},
 				"ForkIDChunkSize": {
 					"type": "integer",
 					"description": "ForkIDChunkSize is the max interval for each call to L1 provider to get the forkIDs",
@@ -537,9 +532,9 @@
 					"description": "L1SyncCheckL2BlockHash if is true when a batch is closed is force to check  L2Block hash against trustedNode (only apply for permissionless)",
 					"default": true
 				},
-				"L1SyncCheckL2BlockNumberModulus": {
+				"L1SyncCheckL2BlockNumberhModulus": {
 					"type": "integer",
-					"description": "L1SyncCheckL2BlockNumberModulus is the modulus used to choose the l2block to check\na modules 5, for instance, means check all l2block multiples of 5 (10,15,20,...)",
+					"description": "L1SyncCheckL2BlockNumberhModulus is the modulus used to choose the l2block to check\na modules 5, for instance, means check all l2block multiples of 5 (10,15,20,...)",
 					"default": 600
 				},
 				"L1BlockCheck": {
@@ -716,12 +711,24 @@
 						"ReprocessFullBatchOnClose": {
 							"type": "boolean",
 							"description": "ReprocessFullBatchOnClose if is true when a batch is closed is force to reprocess again",
-							"default": true
+							"default": false
 						},
 						"CheckLastL2BlockHashOnCloseBatch": {
 							"type": "boolean",
 							"description": "CheckLastL2BlockHashOnCloseBatch if is true when a batch is closed is force to check the last L2Block hash",
 							"default": true
+						},
+						"DataSourcePriority": {
+							"items": {
+								"type": "string"
+							},
+							"type": "array",
+							"description": "DataSourcePriority defines the order in which L2 batch should be retrieved: local, trusted, external",
+							"default": [
+								"local",
+								"trusted",
+								"external"
+							]
 						}
 					},
 					"additionalProperties": false,
@@ -1013,26 +1020,6 @@
 								"1m",
 								"300ms"
 							]
-						},
-						"InactivityTimeout": {
-							"type": "string",
-							"title": "Duration",
-							"description": "InactivityTimeout is the timeout to kill an inactive datastream client connection",
-							"default": "2m0s",
-							"examples": [
-								"1m",
-								"300ms"
-							]
-						},
-						"InactivityCheckInterval": {
-							"type": "string",
-							"title": "Duration",
-							"description": "InactivityCheckInterval is the time interval to check for datastream client connections that have reached the inactivity timeout to kill them",
-							"default": "5s",
-							"examples": [
-								"1m",
-								"300ms"
-							]
 						}
 					},
 					"additionalProperties": false,
@@ -1126,6 +1113,11 @@
 					"type": "integer",
 					"description": "GasOffset is the amount of gas to be added to the gas estimation in order\nto provide an amount that is higher than the estimated one. This is used\nto avoid the TX getting reverted in case something has changed in the network\nstate after the estimation which can cause the TX to require more gas to be\nexecuted.\n\nex:\ngas estimation: 1000\ngas offset: 100\nfinal gas: 1100",
 					"default": 80000
+				},
+				"MaxBatchesForL1": {
+					"type": "integer",
+					"description": "MaxBatchesForL1 is the maximum amount of batches to be sequenced in a single L1 tx",
+					"default": 300
 				},
 				"SequenceL1BlockConfirmations": {
 					"type": "integer",
@@ -1240,6 +1232,43 @@
 					"description": "UpgradeEtrogBatchNumber is the number of the first batch after upgrading to etrog",
 					"default": 0
 				},
+				"SettlementBackend": {
+					"type": "string",
+					"description": "SettlementBackend configuration defines how a final ZKP should be settled. Directly to L1 or over the Beethoven service.",
+					"default": "agglayer"
+				},
+				"AggLayerTxTimeout": {
+					"type": "string",
+					"title": "Duration",
+					"description": "AggLayerTxTimeout is the interval time to wait for a tx to be mined from the agglayer",
+					"default": "5m0s",
+					"examples": [
+						"1m",
+						"300ms"
+					]
+				},
+				"AggLayerURL": {
+					"type": "string",
+					"description": "AggLayerURL url of the agglayer service",
+					"default": "http://zkevm-agglayer"
+				},
+				"SequencerPrivateKey": {
+					"properties": {
+						"Path": {
+							"type": "string",
+							"description": "Path is the file path for the key store file",
+							"default": "/pk/sequencer.keystore"
+						},
+						"Password": {
+							"type": "string",
+							"description": "Password is the password to decrypt the key store file",
+							"default": "testonly"
+						}
+					},
+					"additionalProperties": false,
+					"type": "object",
+					"description": "SequencerPrivateKey Private key of the trusted sequencer"
+				},
 				"BatchProofL1BlockConfirmations": {
 					"type": "integer",
 					"description": "BatchProofL1BlockConfirmations is number of L1 blocks to consider we can generate the proof for a virtual batch",
@@ -1302,9 +1331,14 @@
 				},
 				"Genesis": {
 					"properties": {
-						"BlockNumber": {
+						"RollupBlockNumber": {
 							"type": "integer",
-							"description": "BlockNumber is the block number where the polygonZKEVM smc was deployed on L1",
+							"description": "RollupBlockNumber is the block number where the polygonZKEVM smc was deployed on L1",
+							"default": 0
+						},
+						"RollupManagerBlockNumber": {
+							"type": "integer",
+							"description": "RollupManagerBlockNumber is the block number where the RollupManager smc was deployed on L1",
 							"default": 0
 						},
 						"Root": {

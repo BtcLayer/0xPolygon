@@ -46,7 +46,7 @@ func TestTxGetMined(t *testing.T) {
 
 	currentNonce := uint64(1)
 	etherman.
-		On("PendingNonce", ctx, from).
+		On("CurrentNonce", ctx, from).
 		Return(currentNonce, nil).
 		Once()
 
@@ -156,7 +156,7 @@ func TestTxGetMinedAfterReviewed(t *testing.T) {
 	// Add
 	currentNonce := uint64(1)
 	etherman.
-		On("PendingNonce", ctx, from).
+		On("CurrentNonce", ctx, from).
 		Return(currentNonce, nil).
 		Once()
 
@@ -314,7 +314,7 @@ func TestTxGetMinedAfterConfirmedAndReorged(t *testing.T) {
 	// Add
 	currentNonce := uint64(1)
 	etherman.
-		On("PendingNonce", ctx, from).
+		On("CurrentNonce", ctx, from).
 		Return(currentNonce, nil).
 		Once()
 
@@ -492,7 +492,7 @@ func TestExecutionReverted(t *testing.T) {
 	// Add
 	currentNonce := uint64(1)
 	etherman.
-		On("PendingNonce", ctx, from).
+		On("CurrentNonce", ctx, from).
 		Return(currentNonce, nil).
 		Once()
 
@@ -564,7 +564,7 @@ func TestExecutionReverted(t *testing.T) {
 
 	currentNonce = uint64(2)
 	etherman.
-		On("PendingNonce", ctx, from).
+		On("CurrentNonce", ctx, from).
 		Return(currentNonce, nil).
 		Once()
 	secondGasEstimation := uint64(2)
@@ -714,7 +714,7 @@ func TestGasPriceMarginAndLimit(t *testing.T) {
 
 			currentNonce := uint64(1)
 			etherman.
-				On("PendingNonce", ctx, from).
+				On("CurrentNonce", ctx, from).
 				Return(currentNonce, nil).
 				Once()
 
@@ -795,7 +795,7 @@ func TestGasOffset(t *testing.T) {
 
 			currentNonce := uint64(1)
 			etherman.
-				On("PendingNonce", ctx, from).
+				On("CurrentNonce", ctx, from).
 				Return(currentNonce, nil).
 				Once()
 
@@ -849,7 +849,7 @@ func TestFailedToEstimateTxWithForcedGasGetMined(t *testing.T) {
 
 	currentNonce := uint64(1)
 	etherman.
-		On("PendingNonce", ctx, from).
+		On("CurrentNonce", ctx, from).
 		Return(currentNonce, nil).
 		Once()
 

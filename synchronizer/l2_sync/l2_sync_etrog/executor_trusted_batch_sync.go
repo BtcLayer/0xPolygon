@@ -9,6 +9,7 @@ import (
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/0xPolygonHermez/zkevm-node/state"
+	"github.com/0xPolygonHermez/zkevm-node/state/runtime/executor"
 	syncCommon "github.com/0xPolygonHermez/zkevm-node/synchronizer/common"
 	"github.com/0xPolygonHermez/zkevm-node/synchronizer/common/syncinterfaces"
 	"github.com/0xPolygonHermez/zkevm-node/synchronizer/l2_sync/l2_shared"
@@ -218,19 +219,18 @@ func (b *SyncTrustedBatchExecutorForEtrog) IncrementalProcess(ctx context.Contex
 		log.Errorf("%s error batchResultSanityCheck. Error: %s", data.DebugPrefix, err.Error())
 		return nil, err
 	}
+	log.Debugf("%s updateWIPBatch ", data.DebugPrefix)
+	err = b.updateWIPBatch(ctx, data, processBatchResp.NewStateRoot, dbTx)
+	if err != nil {
+		log.Errorf("%s error updateWIPBatch. Error: ", data.DebugPrefix, err)
+		return nil, err
+	}
 
 	if data.BatchMustBeClosed {
 		log.Debugf("%s Closing batch", data.DebugPrefix)
 		err = b.CloseBatch(ctx, data.TrustedBatch, dbTx, data.DebugPrefix)
 		if err != nil {
 			log.Errorf("%s error closing batch. Error: ", data.DebugPrefix, err)
-			return nil, err
-		}
-	} else {
-		log.Debugf("%s updateWIPBatch", data.DebugPrefix)
-		err = b.updateWIPBatch(ctx, data, processBatchResp.NewStateRoot, dbTx)
-		if err != nil {
-			log.Errorf("%s error updateWIPBatch. Error: ", data.DebugPrefix, err)
 			return nil, err
 		}
 	}
@@ -429,6 +429,7 @@ func (b *SyncTrustedBatchExecutorForEtrog) getProcessRequest(data *l2_shared.Pro
 		Transactions:            data.TrustedBatch.BatchL2Data,
 		ForkID:                  b.state.GetForkIDByBatchNumber(uint64(data.TrustedBatch.Number)),
 		SkipVerifyL1InfoRoot_V2: true,
+		ExecutionMode:           executor.ExecutionMode1,
 	}
 	return request
 }

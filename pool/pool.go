@@ -95,6 +95,13 @@ func NewPool(cfg Config, batchConstraintsCfg state.BatchConstraintsCfg, s storag
 			time.Sleep(cfg.IntervalToRefreshGasPrices.Duration)
 		}
 	}(&cfg, p)
+	p.refreshBlockedAddresses()
+	go func(cfg *Config, p *Pool) {
+		for {
+			time.Sleep(cfg.IntervalToRefreshBlockedAddresses.Duration)
+			p.refreshBlockedAddresses()
+		}
+	}(&cfg, p)
 
 	return p
 }
@@ -196,16 +203,7 @@ func (p *Pool) StoreTx(ctx context.Context, tx types.Transaction, ip string, isW
 		return err
 	}
 
-	var oocError error
 	if preExecutionResponse.OOCError != nil {
-		oocError = preExecutionResponse.OOCError
-	} else {
-		if err = p.batchConstraintsCfg.CheckNodeLevelOOC(preExecutionResponse.reservedZKCounters); err != nil {
-			oocError = err
-		}
-	}
-
-	if oocError != nil {
 		event := &event.Event{
 			ReceivedAt:  time.Now(),
 			IPAddress:   ip,
@@ -221,7 +219,7 @@ func (p *Pool) StoreTx(ctx context.Context, tx types.Transaction, ip string, isW
 			log.Errorf("error adding event: %v", err)
 		}
 		// Do not add tx to the pool
-		return fmt.Errorf("failed to add tx to the pool: %w", oocError)
+		return fmt.Errorf("failed to add tx to the pool: %w", preExecutionResponse.OOCError)
 	} else if preExecutionResponse.OOGError != nil {
 		event := &event.Event{
 			ReceivedAt:  time.Now(),
@@ -250,7 +248,6 @@ func (p *Pool) StoreTx(ctx context.Context, tx types.Transaction, ip string, isW
 	}
 
 	poolTx := NewTransaction(tx, ip, isWIP)
-	poolTx.GasUsed = preExecutionResponse.txResponse.GasUsed
 	poolTx.ZKCounters = preExecutionResponse.usedZKCounters
 	poolTx.ReservedZKCounters = preExecutionResponse.reservedZKCounters
 
@@ -341,6 +338,12 @@ func (p *Pool) preExecuteTx(ctx context.Context, tx types.Transaction) (preExecu
 			}
 			if errors.Is(errorToCheck, runtime.ErrOutOfGas) {
 				response.OOGError = err
+			}
+		} else {
+			if !p.batchConstraintsCfg.IsWithinConstraints(processBatchResponse.UsedZkCounters) {
+				err := fmt.Errorf("OutOfCounters Error (Node level) for tx: %s", tx.Hash().String())
+				response.OOCError = err
+				log.Error(err.Error())
 			}
 		}
 
@@ -696,7 +699,7 @@ func (p *Pool) CalculateEffectiveGasPrice(rawTx []byte, txGasPrice *big.Int, txG
 
 // CalculateEffectiveGasPricePercentage calculates the gas price's effective percentage
 func (p *Pool) CalculateEffectiveGasPricePercentage(gasPrice *big.Int, effectiveGasPrice *big.Int) (uint8, error) {
-	return p.effectiveGasPrice.CalculateEffectiveGasPricePercentage(gasPrice, effectiveGasPrice)
+	return state.CalculateEffectiveGasPricePercentage(gasPrice, effectiveGasPrice)
 }
 
 // EffectiveGasPriceEnabled returns if effective gas price calculation is enabled or not
@@ -737,6 +740,11 @@ func IntrinsicGas(tx types.Transaction) (uint64, error) {
 		gas += z * txDataZeroGas
 	}
 	return gas, nil
+}
+
+// CheckPolicy checks if an address is allowed by policy name
+func (p *Pool) CheckPolicy(ctx context.Context, policy PolicyName, address common.Address) (bool, error) {
+	return p.storage.CheckPolicy(ctx, policy, address)
 }
 
 // checkTxFee is an internal function used to check whether the fee of

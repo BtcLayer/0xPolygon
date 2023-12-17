@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	zkevmbridgeservice "github.com/0xPolygonHermez/zkevm-bridge-service"
+	"github.com/0xPolygonHermez/zkevm-node"
 	"github.com/hermeznetwork/tracerr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -85,7 +85,7 @@ func NewLogger(cfg Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 	zapCfg.Level = level
 	zapCfg.OutputPaths = cfg.Outputs
 	zapCfg.InitialFields = map[string]interface{}{
-		"version": zkevmbridgeservice.Version,
+		"version": zkevm.Version,
 		"pid":     os.Getpid(),
 	}
 

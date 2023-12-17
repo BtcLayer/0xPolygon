@@ -3,75 +3,92 @@ package operations
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/0xPolygonHermez/zkevm-bridge-service/bridgectrl"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/bridgectrl/pb"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/db"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/db/pgstorage"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/etherman"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/log"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/server"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/utils"
-	"github.com/0xPolygonHermez/zkevm-bridge-service/utils/gerror"
-	"github.com/0xPolygonHermez/zkevm-node/encoding"
-	erc20 "github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/pol"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmbridge"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmglobalexitroot"
-	"github.com/0xPolygonHermez/zkevm-node/test/contracts/bin/ERC20"
-	"github.com/0xPolygonHermez/zkevm-node/test/operations"
+	"github.com/0xPolygonHermez/zkevm-node/db"
+	"github.com/0xPolygonHermez/zkevm-node/event"
+	"github.com/0xPolygonHermez/zkevm-node/event/nileventstorage"
+	"github.com/0xPolygonHermez/zkevm-node/l1infotree"
+	"github.com/0xPolygonHermez/zkevm-node/log"
+	"github.com/0xPolygonHermez/zkevm-node/merkletree"
+	"github.com/0xPolygonHermez/zkevm-node/state"
+	"github.com/0xPolygonHermez/zkevm-node/state/metrics"
+	"github.com/0xPolygonHermez/zkevm-node/state/pgstatestorage"
+	"github.com/0xPolygonHermez/zkevm-node/state/runtime/executor"
+	"github.com/0xPolygonHermez/zkevm-node/test/constants"
+	"github.com/0xPolygonHermez/zkevm-node/test/dbutils"
+	"github.com/0xPolygonHermez/zkevm-node/test/testutils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-)
-
-// NetworkSID is used to identify the network.
-type NetworkSID string
-
-// NetworkSID constants
-const (
-	L1 NetworkSID = "l1"
-	L2 NetworkSID = "l2"
-
-	waitRootSyncDeadline = 120 * time.Second
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/jackc/pgx/v4"
 )
 
 const (
-	l1NetworkURL = "http://localhost:8545"
-	l2NetworkURL = "http://localhost:8123"
+	cmdFolder = "test"
+)
 
-	// PolTokenAddress token address
-	PolTokenAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3" //nolint:gosec
-	l1BridgeAddr    = "0xFe12ABaa190Ef0c8638Ee0ba9F828BF41368Ca0E"
-	l2BridgeAddr    = "0xFe12ABaa190Ef0c8638Ee0ba9F828BF41368Ca0E"
+// Public shared
+const (
+	DefaultSequencerAddress                    = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+	DefaultSequencerPrivateKey                 = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	DefaultForcedBatchesAddress                = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+	DefaultForcedBatchesPrivateKey             = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+	DefaultSequencerBalance                    = 400000
+	DefaultMaxCumulativeGasUsed                = 800000
+	DefaultL1ZkEVMSmartContract                = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
+	DefaultL1RollupManagerSmartContract        = "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
+	DefaultL1PolSmartContract                  = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+	DefaultL1DataCommitteeContract             = "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE"
+	DefaultL1NetworkURL                        = "http://localhost:8545"
+	DefaultL1NetworkWebSocketURL               = "ws://localhost:8546"
+	DefaultL1ChainID                    uint64 = 1337
 
-	l1AccHexAddress = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+	DefaultL2NetworkURL                        = "http://localhost:8123"
+	PermissionlessL2NetworkURL                 = "http://localhost:8125"
+	DefaultL2NetworkWebSocketURL               = "ws://localhost:8133"
+	PermissionlessL2NetworkWebSocketURL        = "ws://localhost:8135"
+	DefaultL2ChainID                    uint64 = 1001
 
-	sequencerAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+	DefaultTimeoutTxToBeMined = 1 * time.Minute
 
-	makeCmd = "make"
-	cmdDir  = "../.."
-
-	mtHeight = 32
-	rollupID = 1
+	DefaultWaitPeriodSendSequence                          = "15s"
+	DefaultLastBatchVirtualizationTimeMaxWaitPeriod        = "10s"
+	DefaultMaxTxSizeForL1                           uint64 = 131072
 )
 
 var (
-	dbConfig          = pgstorage.NewConfigFromEnv()
-	accHexPrivateKeys = map[NetworkSID]string{
-		L1: "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a", //0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
-		L2: "0xdfd01798f92667dbf91df722434e8fbe96af0211d4d1b82bbbbc8f1def7a814f", //0xc949254d682d8c9ad5682521675b8f43b102aec4
-	}
+	stateDBCfg = dbutils.NewStateConfigFromEnv()
+	poolDBCfg  = dbutils.NewPoolConfigFromEnv()
+
+	zkProverURI      = testutils.GetEnv(constants.ENV_ZKPROVER_URI, "127.0.0.1")
+	executorURI      = fmt.Sprintf("%s:50071", zkProverURI)
+	merkleTreeURI    = fmt.Sprintf("%s:50061", zkProverURI)
+	executorConfig   = executor.Config{URI: executorURI, MaxGRPCMessageSize: 100000000}
+	merkleTreeConfig = merkletree.Config{URI: merkleTreeURI}
 )
+
+// SequenceSenderConfig is the configuration for the sequence sender operations
+type SequenceSenderConfig struct {
+	WaitPeriodSendSequence                   string
+	LastBatchVirtualizationTimeMaxWaitPeriod string
+	MaxTxSizeForL1                           uint64
+	SenderAddress                            string
+	PrivateKey                               string
+}
 
 // Config is the main Manager configuration.
 type Config struct {
-	Storage db.Config
-	BT      bridgectrl.Config
-	BS      server.Config
+	State          *state.Config
+	SequenceSender *SequenceSenderConfig
+	Genesis        state.Genesis
 }
 
 // Manager controls operations and has knowledge about how to set up and tear
@@ -80,347 +97,357 @@ type Manager struct {
 	cfg *Config
 	ctx context.Context
 
-	storage       StorageInterface
-	bridgetree    *bridgectrl.BridgeController
-	bridgeService BridgeServiceInterface
-
-	clients map[NetworkSID]*utils.Client
+	st   *state.State
+	wait *Wait
 }
 
 // NewManager returns a manager ready to be used and a potential error caused
 // during its creation (which can come from the setup of the db connection).
 func NewManager(ctx context.Context, cfg *Config) (*Manager, error) {
+	// Init database instance
+	initOrResetDB()
+	return NewManagerNoInitDB(ctx, cfg)
+}
+
+func NewManagerNoInitDB(ctx context.Context, cfg *Config) (*Manager, error) {
 	opsman := &Manager{
-		cfg: cfg,
-		ctx: ctx,
+		cfg:  cfg,
+		ctx:  ctx,
+		wait: NewWait(),
 	}
-	//Init storage and mt
-	// err := pgstorage.InitOrReset(dbConfig)
+	st, err := initState(*cfg.State)
+	if err != nil {
+		return nil, err
+	}
+	opsman.st = st
+
+	return opsman, nil
+}
+
+// State is a getter for the st field.
+func (m *Manager) State() *state.State {
+	return m.st
+}
+
+// CheckVirtualRoot verifies if the given root is the current root of the
+// merkletree for virtual state.
+func (m *Manager) CheckVirtualRoot(expectedRoot string) error {
+	panic("not implemented yet")
+	// root, err := m.st.Getroot(m.ctx, true, "")
 	// if err != nil {
-	// 	return nil, err
+	// 	return err
 	// }
-
-	pgst, err := pgstorage.NewPostgresStorage(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-	st, err := db.NewStorage(cfg.Storage)
-	if err != nil {
-		return nil, err
-	}
-	bt, err := bridgectrl.NewBridgeController(ctx, cfg.BT, []uint{0, 1}, pgst)
-	if err != nil {
-		return nil, err
-	}
-	l1Client, err := utils.NewClient(ctx, l1NetworkURL, common.HexToAddress(l1BridgeAddr))
-	if err != nil {
-		return nil, err
-	}
-	l2Client, err := utils.NewClient(ctx, l2NetworkURL, common.HexToAddress(l2BridgeAddr))
-	if err != nil {
-		return nil, err
-	}
-	bService := server.NewBridgeService(cfg.BS, cfg.BT.Height, []uint{0, 1}, pgst, rollupID)
-	opsman.storage = st.(StorageInterface)
-	opsman.bridgetree = bt
-	opsman.bridgeService = bService
-	opsman.clients = make(map[NetworkSID]*utils.Client)
-	opsman.clients[L1] = l1Client
-	opsman.clients[L2] = l2Client
-	return opsman, err
+	// return m.checkRoot(root, expectedRoot)
 }
 
-// CheckL2Claim checks if the claim is already in the L2 network.
-func (m *Manager) CheckL2Claim(ctx context.Context, networkID, depositCnt uint) error {
-	return operations.Poll(defaultInterval, defaultDeadline, func() (bool, error) {
-		_, err := m.storage.GetClaim(ctx, depositCnt, networkID, nil)
-		if err != nil {
-			if err == gerror.ErrStorageNotFound {
-				return false, nil
-			}
-			return false, err
+// CheckConsolidatedRoot verifies if the given root is the current root of the
+// merkletree for consolidated state.
+func (m *Manager) CheckConsolidatedRoot(expectedRoot string) error {
+	panic("not implemented yet")
+	// root, err := m.st.GetStateRoot(m.ctx, false, "")
+	// if err != nil {
+	// 	return err
+	// }
+	// return m.checkRoot(root, expectedRoot)
+}
+
+// SetGenesisAccountsBalance creates the genesis block in the state.
+func (m *Manager) SetGenesisAccountsBalance(genesisBlockNumber uint64, genesisAccounts map[string]big.Int) error {
+	var genesisActions []*state.GenesisAction
+	for address, balanceValue := range genesisAccounts {
+		action := &state.GenesisAction{
+			Address: address,
+			Type:    int(merkletree.LeafTypeBalance),
+			Value:   balanceValue.String(),
 		}
-		return true, nil
-	})
+		genesisActions = append(genesisActions, action)
+	}
+
+	return m.SetGenesis(genesisBlockNumber, genesisActions)
 }
 
-// CustomCheckL2Claim checks if the claim is already in the L2 network.
-func (m *Manager) CustomCheckL2Claim(ctx context.Context, networkID, depositCnt uint, interval, deadline time.Duration) error {
-	return operations.Poll(interval, deadline, func() (bool, error) {
-		_, err := m.storage.GetClaim(ctx, depositCnt, networkID, nil)
+func (m *Manager) SetGenesis(genesisBlockNumber uint64, genesisActions []*state.GenesisAction) error {
+	genesisBlock := state.Block{
+		BlockNumber: genesisBlockNumber,
+		BlockHash:   state.ZeroHash,
+		ParentHash:  state.ZeroHash,
+		ReceivedAt:  time.Now(),
+	}
+	genesis := state.Genesis{
+		Actions: genesisActions,
+	}
+
+	dbTx, err := m.st.BeginStateTransaction(m.ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.st.SetGenesis(m.ctx, genesisBlock, genesis, metrics.SynchronizerCallerLabel, dbTx)
+
+	errCommit := dbTx.Commit(m.ctx)
+	if errCommit != nil {
+		return errCommit
+	}
+
+	return err
+}
+
+// SetForkID sets the initial forkID in db for testing purposes
+func (m *Manager) SetForkID(blockNum uint64, forkID uint64) error {
+	dbTx, err := m.st.BeginStateTransaction(m.ctx)
+	if err != nil {
+		return err
+	}
+
+	// Add initial forkID
+	fID := state.ForkIDInterval{
+		FromBatchNumber: 1,
+		ToBatchNumber:   math.MaxUint64,
+		ForkId:          forkID,
+		Version:         "forkID",
+		BlockNumber:     blockNum,
+	}
+	err = m.st.AddForkIDInterval(m.ctx, fID, dbTx)
+
+	errCommit := dbTx.Commit(m.ctx)
+	if errCommit != nil {
+		return errCommit
+	}
+
+	return err
+}
+
+// ApplyL1Txs sends the given L1 txs, waits for them to be consolidated and
+// checks the final state.
+func ApplyL1Txs(ctx context.Context, txs []*types.Transaction, auth *bind.TransactOpts, client *ethclient.Client) error {
+	_, err := applyTxs(ctx, txs, auth, client, true)
+	return err
+}
+
+// ConfirmationLevel type used to describe the confirmation level of a transaction
+type ConfirmationLevel int
+
+// PoolConfirmationLevel indicates that transaction is added into the pool
+const PoolConfirmationLevel ConfirmationLevel = 0
+
+// TrustedConfirmationLevel indicates that transaction is  added into the trusted state
+const TrustedConfirmationLevel ConfirmationLevel = 1
+
+// VirtualConfirmationLevel indicates that transaction is  added into the virtual state
+const VirtualConfirmationLevel ConfirmationLevel = 2
+
+// VerifiedConfirmationLevel indicates that transaction is  added into the verified state
+const VerifiedConfirmationLevel ConfirmationLevel = 3
+
+// ApplyL2Txs sends the given L2 txs, waits for them to be consolidated and
+// checks the final state.
+func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.TransactOpts, client *ethclient.Client, confirmationLevel ConfirmationLevel) ([]*big.Int, error) {
+	var err error
+	if auth == nil {
+		auth, err = GetAuth(DefaultSequencerPrivateKey, DefaultL2ChainID)
 		if err != nil {
-			if err == gerror.ErrStorageNotFound {
-				return false, nil
-			}
-			return false, err
-		}
-		return true, nil
-	})
-}
-
-// GetNumberClaims get the number of claim events synced
-func (m *Manager) GetNumberClaims(ctx context.Context, destAddr string) (int, error) {
-	const limit = 100
-	claims, err := m.storage.GetClaims(ctx, destAddr, limit, 0, nil)
-	if err != nil {
-		return 0, err
-	}
-	return len(claims), nil
-}
-
-// SendL1Deposit sends a deposit from l1 to l2.
-func (m *Manager) SendL1Deposit(ctx context.Context, tokenAddr common.Address, amount *big.Int,
-	destNetwork uint32, destAddr *common.Address,
-) error {
-	client := m.clients[L1]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L1])
-	if err != nil {
-		return err
-	}
-
-	orgExitRoot, err := m.storage.GetLatestExitRoot(ctx, false, nil)
-	if err != nil && err != gerror.ErrStorageNotFound {
-		return err
-	}
-
-	err = client.SendBridgeAsset(ctx, tokenAddr, amount, destNetwork, destAddr, []byte{}, auth)
-	if err != nil {
-		return err
-	}
-
-	// sync for new exit root
-	return m.WaitExitRootToBeSynced(ctx, orgExitRoot, false)
-}
-
-// SendMultipleL1Deposit sends a deposit from l1 to l2.
-func (m *Manager) SendMultipleL1Deposit(ctx context.Context, tokenAddr common.Address, amount *big.Int,
-	destNetwork uint32, destAddr *common.Address, numberDeposits int,
-) error {
-	if numberDeposits == 0 {
-		return fmt.Errorf("error: numberDeposits is 0")
-	}
-	client := m.clients[L1]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L1])
-	if err != nil {
-		log.Error("error getting signer: ", err)
-		return err
-	}
-
-	for i := 0; i < numberDeposits; i++ {
-		err = client.SendBridgeAsset(ctx, tokenAddr, big.NewInt(0).Add(amount, big.NewInt(int64(i))), destNetwork, destAddr, []byte{}, auth)
-		if err != nil {
-			log.Error("error sending bridge asset: ", err)
-			return err
-		}
-	}
-	return nil
-}
-
-// SendL2Deposit sends a deposit from l2 to l1.
-func (m *Manager) SendL2Deposit(ctx context.Context, tokenAddr common.Address, amount *big.Int,
-	destNetwork uint32, destAddr *common.Address,
-) error {
-	client := m.clients[L2]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L2])
-	if err != nil {
-		return err
-	}
-
-	orgExitRoot, err := m.storage.GetLatestExitRoot(ctx, true, nil)
-	if err != nil && err != gerror.ErrStorageNotFound {
-		return err
-	}
-
-	err = client.SendBridgeAsset(ctx, tokenAddr, amount, destNetwork, destAddr, []byte{}, auth)
-	if err != nil {
-		return err
-	}
-
-	// sync for new exit root
-	return m.WaitExitRootToBeSynced(ctx, orgExitRoot, true)
-}
-
-// SendL1BridgeMessage bridges a message from l1 to l2.
-func (m *Manager) SendL1BridgeMessage(ctx context.Context, destAddr common.Address, destNetwork uint32, amount *big.Int, metadata []byte, privKey *string) error {
-	client := m.clients[L1]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L1])
-	if err != nil {
-		return err
-	}
-	if privKey != nil {
-		auth, err = client.GetSigner(ctx, *privKey)
-		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	orgExitRoot, err := m.storage.GetLatestExitRoot(ctx, true, nil)
-	if err != nil && err != gerror.ErrStorageNotFound {
-		return err
+	if client == nil {
+		client, err = ethclient.Dial(DefaultL2NetworkURL)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	auth.Value = amount
-	err = client.SendBridgeMessage(ctx, destNetwork, destAddr, metadata, auth)
+	waitToBeMined := confirmationLevel != PoolConfirmationLevel
+	sentTxs, err := applyTxs(ctx, txs, auth, client, waitToBeMined)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if confirmationLevel == PoolConfirmationLevel {
+		return nil, nil
+	}
+	l2BlockNumbers := make([]*big.Int, 0, len(sentTxs))
+	for _, tx := range sentTxs {
+		// check transaction nonce against transaction reported L2 block number
+		receipt, err := client.TransactionReceipt(ctx, tx.Hash())
+		if err != nil {
+			return nil, err
+		}
+
+		// get L2 block number
+		l2BlockNumbers = append(l2BlockNumbers, receipt.BlockNumber)
+		if confirmationLevel == TrustedConfirmationLevel {
+			continue
+		}
+
+		// wait for l2 block to be virtualized
+		log.Infof("waiting for the block number %v to be virtualized", receipt.BlockNumber.String())
+		err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, 4*time.Minute) //nolint:gomnd
+		if err != nil {
+			return nil, err
+		}
+		if confirmationLevel == VirtualConfirmationLevel {
+			continue
+		}
+
+		// wait for l2 block number to be consolidated
+		log.Infof("waiting for the block number %v to be consolidated", receipt.BlockNumber.String())
+		err = WaitL2BlockToBeConsolidated(receipt.BlockNumber, 4*time.Minute) //nolint:gomnd
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// sync for new exit root
-	return m.WaitExitRootToBeSynced(ctx, orgExitRoot, false)
+	return l2BlockNumbers, nil
 }
 
-// SendL2BridgeMessage bridges a message from l2 to l1.
-func (m *Manager) SendL2BridgeMessage(ctx context.Context, destAddr common.Address, destNetwork uint32, amount *big.Int, metadata []byte) error {
-	client := m.clients[L2]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L2])
+func applyTxs(ctx context.Context, txs []*types.Transaction, auth *bind.TransactOpts, client *ethclient.Client, waitToBeMined bool) ([]*types.Transaction, error) {
+	var sentTxs []*types.Transaction
+
+	for i := 0; i < len(txs); i++ {
+		signedTx, err := auth.Signer(auth.From, txs[i])
+		if err != nil {
+			return nil, err
+		}
+		log.Infof("Sending Tx %v Nonce %v", signedTx.Hash(), signedTx.Nonce())
+		err = client.SendTransaction(context.Background(), signedTx)
+		if err != nil {
+			return nil, err
+		}
+
+		sentTxs = append(sentTxs, signedTx)
+	}
+	if !waitToBeMined {
+		return nil, nil
+	}
+
+	// wait for TX to be mined
+	timeout := 180 * time.Second //nolint:gomnd
+	for _, tx := range sentTxs {
+		log.Infof("Waiting Tx %s to be mined", tx.Hash())
+		err := WaitTxToBeMined(ctx, client, tx, timeout)
+		if err != nil {
+			return nil, err
+		}
+		log.Infof("Tx %s mined successfully", tx.Hash())
+	}
+	nTxs := len(txs)
+	if nTxs > 1 {
+		log.Infof("%d transactions added into the trusted state successfully.", nTxs)
+	} else {
+		log.Info("transaction added into the trusted state successfully.")
+	}
+
+	return sentTxs, nil
+}
+
+// GetAuth configures and returns an auth object.
+func GetAuth(privateKeyStr string, chainID uint64) (*bind.TransactOpts, error) {
+	privateKey, err := crypto.HexToECDSA(strings.TrimPrefix(privateKeyStr, "0x"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	orgExitRoot, err := m.storage.GetLatestExitRoot(ctx, true, nil)
-	if err != nil && err != gerror.ErrStorageNotFound {
-		return err
-	}
+	return bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(0).SetUint64(chainID))
+}
 
-	auth.Value = amount
-	err = client.SendBridgeMessage(ctx, destNetwork, destAddr, metadata, auth)
+// MustGetAuth GetAuth but panics if err
+func MustGetAuth(privateKeyStr string, chainID uint64) *bind.TransactOpts {
+	auth, err := GetAuth(privateKeyStr, chainID)
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	// sync for new exit root
-	return m.WaitExitRootToBeSynced(ctx, orgExitRoot, true)
+	return auth
 }
 
 // Setup creates all the required components and initializes them according to
 // the manager config.
 func (m *Manager) Setup() error {
 	// Run network container
-	err := m.startNetwork()
+	err := m.StartNetwork()
 	if err != nil {
-		log.Error("network start failed")
-		return err
-	}
-	const t time.Duration = 3
-	time.Sleep(t * time.Second)
-
-	// Start prover container
-	err = m.startProver()
-	if err != nil {
-		log.Error("prover start failed")
 		return err
 	}
 
-	//Send funds to zkevm node
-	err = m.AddFunds(m.ctx)
+	// Approve pol
+	err = ApprovePol()
 	if err != nil {
-		log.Error("addfunds failed")
 		return err
 	}
 
-	// Run zkevm node container
-	err = m.startZKEVMNode()
+	// Run node container
+	err = m.StartNode()
 	if err != nil {
-		log.Error("zkevm node start failed")
 		return err
 	}
-	//Wait for set the genesis and sync
-	time.Sleep(t * time.Second)
-
-	// Run bridge container
-	err = StartBridge()
-	if err != nil {
-		log.Error("bridge start failed")
-		// return err
-	}
-
-	//Wait for sync
-	const t2 time.Duration = 5
-	time.Sleep(t2 * time.Second)
 
 	return nil
 }
 
-// AddFunds adds pol and eth to the zkevm node wallet.
-func (m *Manager) AddFunds(ctx context.Context) error {
-	// Eth client
-	log.Infof("Connecting to l1")
-	client := m.clients[L1]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L1])
+// SetupWithPermissionless creates all the required components for both trusted and permissionless nodes
+// and initializes them according to the manager config.
+func (m *Manager) SetupWithPermissionless() error {
+	// Run network container
+	err := m.StartNetwork()
 	if err != nil {
 		return err
 	}
 
-	// Getting l1 info
-	log.Infof("Getting L1 info")
-	gasPrice, err := client.SuggestGasPrice(ctx)
+	// Approve Pol
+	err = ApprovePol()
 	if err != nil {
 		return err
 	}
 
-	// Send some Ether from l1Acc to sequencer acc
-	log.Infof("Transferring ETH to the sequencer")
-	fromAddress := common.HexToAddress(l1AccHexAddress)
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-	if err != nil {
-		return err
-	}
-	const gasLimit = 21000
-	toAddress := common.HexToAddress(sequencerAddress)
-	ethAmount, _ := big.NewInt(0).SetString("200000000000000000000", encoding.Base10)
-	tx := types.NewTransaction(nonce, toAddress, ethAmount, gasLimit, gasPrice, nil)
-	signedTx, err := auth.Signer(auth.From, tx)
-	if err != nil {
-		return err
-	}
-	err = client.SendTransaction(ctx, signedTx)
+	err = m.StartTrustedAndPermissionlessNode()
 	if err != nil {
 		return err
 	}
 
-	// Wait eth transfer to be mined
-	log.Infof("Waiting tx to be mined")
-	const txETHTransferTimeout = 5 * time.Second
-	err = WaitTxToBeMined(ctx, client.Client, signedTx, txETHTransferTimeout)
-	if err != nil {
+	// Run node container
+	return nil
+}
+
+// StartEthTxSender stops the eth tx sender service
+func (m *Manager) StartEthTxSender() error {
+	return StartComponent("eth-tx-manager")
+}
+
+// StopEthTxSender stops the eth tx sender service
+func (m *Manager) StopEthTxSender() error {
+	return StopComponent("eth-tx-manager")
+}
+
+// StartSequencer starts the sequencer
+func (m *Manager) StartSequencer() error {
+	return StartComponent("seq")
+}
+
+// StopSequencer stops the sequencer
+func (m *Manager) StopSequencer() error {
+	return StopComponent("seq")
+}
+
+// StartSequenceSender starts the sequence sender
+func (m *Manager) StartSequenceSender() error {
+	return StartComponent("seqsender")
+}
+
+// StopSequenceSender stops the sequence sender
+func (m *Manager) StopSequenceSender() error {
+	return StopComponent("seqsender")
+}
+
+// ShowDockerLogs for running dockers
+func (m *Manager) ShowDockerLogs() error {
+	cmdLogs := "show-logs"
+	if err := RunMakeTarget(cmdLogs); err != nil {
 		return err
 	}
-
-	// Create pol polTokenSC sc instance
-	log.Infof("Loading pol token SC instance")
-	polAddr := common.HexToAddress(PolTokenAddress)
-	polTokenSC, err := operations.NewToken(polAddr, client)
-	if err != nil {
-		return err
-	}
-
-	// Send pol to sequencer
-	log.Infof("Transferring pol tokens to sequencer")
-	polAmount, _ := big.NewInt(0).SetString("200000000000000000000000", encoding.Base10)
-	tx, err = polTokenSC.Transfer(auth, toAddress, polAmount)
-	if err != nil {
-		return err
-	}
-
-	// wait pol transfer to be mined
-	log.Infof("Waiting tx to be mined")
-	const txPolTransferTimeout = 5 * time.Second
-	return WaitTxToBeMined(ctx, client.Client, tx, txPolTransferTimeout)
+	return nil
 }
 
 // Teardown stops all the components.
 func Teardown() error {
-	err := StopBridge()
-	if err != nil {
-		return err
-	}
-
-	err = stopZKEVMNode()
-	if err != nil {
-		return err
-	}
-
-	err = stopProver()
+	err := stopNode()
 	if err != nil {
 		return err
 	}
@@ -433,361 +460,225 @@ func Teardown() error {
 	return nil
 }
 
-func (m *Manager) startNetwork() error {
-	if err := stopNetwork(); err != nil {
+// TeardownPermissionless stops all the components.
+func TeardownPermissionless() error {
+	err := stopPermissionlessNode()
+	if err != nil {
 		return err
 	}
-	cmd := exec.Command(makeCmd, "run-network")
-	err := runCmd(cmd)
+
+	err = stopNetwork()
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func initState(cfg state.Config) (*state.State, error) {
+	sqlDB, err := db.NewSQLDB(stateDBCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	stateCfg := state.Config{
+		MaxCumulativeGasUsed: cfg.MaxCumulativeGasUsed,
+		ChainID:              cfg.ChainID,
+		ForkIDIntervals:      cfg.ForkIDIntervals,
+	}
+
+	ctx := context.Background()
+	stateDb := pgstatestorage.NewPostgresStorage(stateCfg, sqlDB)
+	executorClient, _, _ := executor.NewExecutorClient(ctx, executorConfig)
+	stateDBClient, _, _ := merkletree.NewMTDBServiceClient(ctx, merkleTreeConfig)
+	stateTree := merkletree.NewStateTree(stateDBClient)
+
+	eventStorage, err := nileventstorage.NewNilEventStorage()
+	if err != nil {
+		return nil, err
+	}
+	eventLog := event.NewEventLog(event.Config{}, eventStorage)
+
+	mt, err := l1infotree.NewL1InfoTree(32, [][32]byte{})
+	if err != nil {
+		panic(err)
+	}
+	st := state.NewState(stateCfg, stateDb, executorClient, stateTree, eventLog, mt)
+	return st, nil
+}
+
+func (m *Manager) BeginStateTransaction() (pgx.Tx, error) {
+	return m.st.BeginStateTransaction(m.ctx)
+}
+
+// StartNetwork starts the L1 network container
+func (m *Manager) StartNetwork() error {
+	return StartComponent("network", networkUpCondition)
+}
+
+// InitNetwork Initializes the L2 network registering the sequencer and adding funds via the bridge
+func (m *Manager) InitNetwork() error {
+	if err := RunMakeTarget("init-network"); err != nil {
+		return err
+	}
+
+	// Wait network to be ready
+	return Poll(DefaultInterval, DefaultDeadline, networkUpCondition)
+}
+
+// DeployUniswap deploys a uniswap environment and perform swaps
+func (m *Manager) DeployUniswap() error {
+	if err := RunMakeTarget("deploy-uniswap"); err != nil {
 		return err
 	}
 	// Wait network to be ready
-	return poll(defaultInterval, defaultDeadline, networkUpCondition)
+	return Poll(DefaultInterval, DefaultDeadline, networkUpCondition)
 }
 
 func stopNetwork() error {
-	cmd := exec.Command(makeCmd, "stop-network")
-	return runCmd(cmd)
+	return StopComponent("network")
 }
 
-func (m *Manager) startZKEVMNode() error {
-	if err := stopZKEVMNode(); err != nil {
-		return err
-	}
-	cmd := exec.Command(makeCmd, "run-node")
-	err := runCmd(cmd)
-	if err != nil {
-		return err
-	}
-	// Wait zkevm node to be ready
-	return poll(defaultInterval, defaultDeadline, zkevmNodeUpCondition)
+// StartNode starts the node container
+func (m *Manager) StartNode() error {
+	return StartComponent("node", nodeUpCondition)
 }
 
-func stopZKEVMNode() error {
-	cmd := exec.Command(makeCmd, "stop-node")
-	return runCmd(cmd)
+// StartTrustedAndPermissionlessNode starts the node container
+func (m *Manager) StartTrustedAndPermissionlessNode() error {
+	return StartComponent("permissionless", nodeUpCondition)
 }
 
-func (m *Manager) startProver() error {
-	if err := stopProver(); err != nil {
-		return err
-	}
-	cmd := exec.Command(makeCmd, "run-prover")
-	err := runCmd(cmd)
-	if err != nil {
-		return err
-	}
-	// Wait prover to be ready
-	return poll(defaultInterval, defaultDeadline, proverUpCondition)
+// ApprovePol runs the approving Pol command
+func ApprovePol() error {
+	return StartComponent("approve-pol")
 }
 
-func stopProver() error {
-	cmd := exec.Command(makeCmd, "stop-prover")
-	return runCmd(cmd)
+func stopNode() error {
+	return StopComponent("node")
+}
+
+func stopPermissionlessNode() error {
+	return StopComponent("permissionless")
 }
 
 func runCmd(c *exec.Cmd) error {
-	c.Dir = cmdDir
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("failed to get current work directory: %v", err)
+	}
+
+	if strings.Contains(dir, cmdFolder) {
+		// Making the change dir to work in any nesting directory level inside cmd folder
+		base := filepath.Base(dir)
+		for base != cmdFolder {
+			dir = filepath.Dir(dir)
+			base = filepath.Base(dir)
+		}
+	} else {
+		dir = fmt.Sprintf("../../%s", cmdFolder)
+	}
+	c.Dir = dir
+
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	return c.Run()
 }
 
-// StartBridge restarts the bridge service.
-func StartBridge() error {
-	if err := StopBridge(); err != nil {
+// StartComponent starts a docker-compose component.
+func StartComponent(component string, conditions ...ConditionFunc) error {
+	cmdDown := fmt.Sprintf("stop-%s", component)
+	if err := RunMakeTarget(cmdDown); err != nil {
 		return err
 	}
-	cmd := exec.Command(makeCmd, "run-bridge")
-	err := runCmd(cmd)
-	if err != nil {
+	cmdUp := fmt.Sprintf("run-%s", component)
+	if err := RunMakeTarget(cmdUp); err != nil {
 		return err
 	}
-	// Wait bridge to be ready
-	return poll(defaultInterval, defaultDeadline, bridgeUpCondition)
+
+	// Wait component to be ready
+	for _, condition := range conditions {
+		if err := Poll(DefaultInterval, DefaultDeadline, condition); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// StopBridge stops the bridge service.
-func StopBridge() error {
-	cmd := exec.Command(makeCmd, "stop-bridge")
+// StopComponent stops a docker-compose component.
+func StopComponent(component string) error {
+	cmdDown := fmt.Sprintf("stop-%s", component)
+	return RunMakeTarget(cmdDown)
+}
+
+// RunMakeTarget runs a Makefile target.
+func RunMakeTarget(target string) error {
+	cmd := exec.Command("make", target)
 	return runCmd(cmd)
 }
 
-// CheckAccountBalance checks the balance by address
-func (m *Manager) CheckAccountBalance(ctx context.Context, network NetworkSID, account *common.Address) (*big.Int, error) {
-	client := m.clients[network]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[network])
-	if err != nil {
-		return big.NewInt(0), nil
+// GetDefaultOperationsConfig provides a default configuration to run the environment
+func GetDefaultOperationsConfig() *Config {
+	return &Config{
+		State: &state.Config{MaxCumulativeGasUsed: DefaultMaxCumulativeGasUsed, ChainID: 1001,
+			ForkIDIntervals: []state.ForkIDInterval{{
+				FromBatchNumber: 0,
+				ToBatchNumber:   math.MaxUint64,
+				ForkId:          state.FORKID_ETROG,
+				Version:         "",
+			}}},
+		SequenceSender: &SequenceSenderConfig{
+			WaitPeriodSendSequence:                   DefaultWaitPeriodSendSequence,
+			LastBatchVirtualizationTimeMaxWaitPeriod: DefaultWaitPeriodSendSequence,
+			MaxTxSizeForL1:                           DefaultMaxTxSizeForL1,
+			SenderAddress:                            DefaultSequencerAddress,
+			PrivateKey:                               DefaultSequencerPrivateKey},
 	}
-
-	if account == nil {
-		account = &auth.From
-	}
-	balance, err := client.BalanceAt(ctx, *account, nil)
-	if err != nil {
-		return big.NewInt(0), nil
-	}
-	return balance, nil
 }
 
-// CheckAccountTokenBalance checks the balance by address
-func (m *Manager) CheckAccountTokenBalance(ctx context.Context, network NetworkSID, tokenAddr common.Address, account *common.Address) (*big.Int, error) {
-	client := m.clients[network]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[network])
-	if err != nil {
-		return big.NewInt(0), nil
-	}
-
-	if account == nil {
-		account = &auth.From
-	}
-	erc20Token, err := erc20.NewPol(tokenAddr, client)
-	if err != nil {
-		return big.NewInt(0), nil
-	}
-	balance, err := erc20Token.BalanceOf(&bind.CallOpts{Pending: false}, *account)
-	if err != nil {
-		return big.NewInt(0), nil
-	}
-	return balance, nil
-}
-
-// GetClaimDataByGER gets the claim data by ger
-func (m *Manager) GetClaimDataByGER(ctx context.Context, networkID, depositCount uint, ger common.Hash) ([mtHeight][bridgectrl.KeyLen]byte, [mtHeight][bridgectrl.KeyLen]byte, *etherman.GlobalExitRoot, error) {
-	res, err := m.bridgeService.GetProofByGER(context.Background(), &pb.GetProofByGERRequest{
-		NetId:      uint32(networkID),
-		DepositCnt: uint64(depositCount),
-		Ger:        ger.String(),
-	})
-	if err != nil {
-		return [mtHeight][32]byte{}, [mtHeight][32]byte{}, nil, err
-	}
-	merkleproof := [mtHeight][bridgectrl.KeyLen]byte{}
-	rollupMerkleProof := [mtHeight][bridgectrl.KeyLen]byte{}
-	for i, p := range res.Proof.MerkleProof {
-		var proof [bridgectrl.KeyLen]byte
-		copy(proof[:], common.FromHex(p))
-		merkleproof[i] = proof
-		var rollupProof [bridgectrl.KeyLen]byte
-		copy(rollupProof[:], common.FromHex(res.Proof.RollupMerkleProof[i]))
-		rollupMerkleProof[i] = rollupProof
-	}
-	return merkleproof, rollupMerkleProof, &etherman.GlobalExitRoot{
-		ExitRoots: []common.Hash{
-			common.HexToHash(res.Proof.MainExitRoot),
-			common.HexToHash(res.Proof.RollupExitRoot),
-		},
-	}, nil
-}
-
-// GetClaimData gets the claim data
-func (m *Manager) GetClaimData(ctx context.Context, networkID, depositCount uint) ([mtHeight][bridgectrl.KeyLen]byte, [mtHeight][bridgectrl.KeyLen]byte, *etherman.GlobalExitRoot, error) {
-	res, err := m.bridgeService.GetProof(context.Background(), &pb.GetProofRequest{
-		NetId:      uint32(networkID),
-		DepositCnt: uint64(depositCount),
-	})
-	if err != nil {
-		return [mtHeight][32]byte{}, [mtHeight][32]byte{}, nil, err
-	}
-	merkleproof := [mtHeight][bridgectrl.KeyLen]byte{}
-	rollupMerkleProof := [mtHeight][bridgectrl.KeyLen]byte{}
-	for i, p := range res.Proof.MerkleProof {
-		var proof [bridgectrl.KeyLen]byte
-		copy(proof[:], common.FromHex(p))
-		merkleproof[i] = proof
-		var rollupProof [bridgectrl.KeyLen]byte
-		copy(rollupProof[:], common.FromHex(res.Proof.RollupMerkleProof[i]))
-		rollupMerkleProof[i] = rollupProof
-	}
-	return merkleproof, rollupMerkleProof, &etherman.GlobalExitRoot{
-		ExitRoots: []common.Hash{
-			common.HexToHash(res.Proof.MainExitRoot),
-			common.HexToHash(res.Proof.RollupExitRoot),
-		},
-	}, nil
-}
-
-// GetBridgeInfoByDestAddr gets the bridge info
-func (m *Manager) GetBridgeInfoByDestAddr(ctx context.Context, addr *common.Address) ([]*pb.Deposit, error) {
-	auth, err := m.clients[L2].GetSigner(ctx, accHexPrivateKeys[L2])
-	if err != nil {
-		return []*pb.Deposit{}, err
-	}
-	if addr == nil {
-		addr = &auth.From
-	}
-	req := pb.GetBridgesRequest{
-		DestAddr: addr.String(),
-	}
-	res, err := m.bridgeService.GetBridges(ctx, &req)
-	if err != nil {
-		return []*pb.Deposit{}, err
-	}
-	return res.Deposits, nil
-}
-
-// SendL1Claim send an L1 claim
-func (m *Manager) SendL1Claim(ctx context.Context, deposit *pb.Deposit, smtProof, smtRollupProof [mtHeight][32]byte, globalExitRoot *etherman.GlobalExitRoot) error {
-	client := m.clients[L1]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L1])
-	if err != nil {
-		return err
-	}
-
-	return client.SendClaim(ctx, deposit, smtProof, smtRollupProof, globalExitRoot, auth)
-}
-
-// SendL2Claim send an L2 claim
-func (m *Manager) SendL2Claim(ctx context.Context, deposit *pb.Deposit, smtProof, smtRollupProof [mtHeight][32]byte, globalExitRoot *etherman.GlobalExitRoot) error {
-	client := m.clients[L2]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[L2])
-	if err != nil {
-		return err
-	}
-
-	err = client.SendClaim(ctx, deposit, smtProof, smtRollupProof, globalExitRoot, auth)
-	return err
-}
-
-// GetTrustedGlobalExitRootSynced reads the latest globalexitroot of a batch proposal from db
-func (m *Manager) GetTrustedGlobalExitRootSynced(ctx context.Context) (*etherman.GlobalExitRoot, error) {
-	return m.storage.GetLatestTrustedExitRoot(ctx, nil)
-}
-
-// GetLatestGlobalExitRootFromL1 reads the latest synced globalexitroot in l1 from db
-func (m *Manager) GetLatestGlobalExitRootFromL1(ctx context.Context) (*etherman.GlobalExitRoot, error) {
-	return m.storage.GetLatestL1SyncedExitRoot(ctx, nil)
-}
-
-// GetCurrentGlobalExitRootFromSmc reads the globalexitroot from the smc
-func (m *Manager) GetCurrentGlobalExitRootFromSmc(ctx context.Context) (*etherman.GlobalExitRoot, error) {
-	client := m.clients[L1]
-	br, err := polygonzkevmbridge.NewPolygonzkevmbridge(common.HexToAddress(l1BridgeAddr), client)
+// GetClient returns an ethereum client to the provided URL
+func GetClient(URL string) (*ethclient.Client, error) {
+	client, err := ethclient.Dial(URL)
 	if err != nil {
 		return nil, err
 	}
-	GlobalExitRootManAddr, err := br.GlobalExitRootManager(&bind.CallOpts{Pending: false})
-	if err != nil {
-		return nil, err
-	}
-	globalManager, err := polygonzkevmglobalexitroot.NewPolygonzkevmglobalexitroot(GlobalExitRootManAddr, client)
-	if err != nil {
-		return nil, err
-	}
-	gMainnet, err := globalManager.LastMainnetExitRoot(&bind.CallOpts{Pending: false})
-	if err != nil {
-		return nil, err
-	}
-	gRollup, err := globalManager.LastRollupExitRoot(&bind.CallOpts{Pending: false})
-	if err != nil {
-		return nil, err
-	}
-	result := etherman.GlobalExitRoot{
-		ExitRoots: []common.Hash{gMainnet, gRollup},
-	}
-	return &result, nil
+	return client, nil
 }
 
-// DeployERC20 deploys erc20 smc
-func (m *Manager) DeployERC20(ctx context.Context, name, symbol string, network NetworkSID) (common.Address, *ERC20.ERC20, error) {
-	client := m.clients[network]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[network])
+// MustGetClient GetClient but panic if err
+func MustGetClient(URL string) *ethclient.Client {
+	client, err := GetClient(URL)
 	if err != nil {
-		return common.Address{}, nil, err
+		panic(err)
 	}
-
-	return client.DeployERC20(ctx, name, symbol, auth)
+	return client
 }
 
-// DeployBridgeMessageReceiver deploys the brdige message receiver smc.
-func (m *Manager) DeployBridgeMessageReceiver(ctx context.Context, network NetworkSID) (common.Address, error) {
-	client := m.clients[network]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[network])
-	if err != nil {
-		return common.Address{}, err
+func initOrResetDB() {
+	if err := dbutils.InitOrResetState(stateDBCfg); err != nil {
+		panic(err)
 	}
-
-	return client.DeployBridgeMessageReceiver(ctx, auth)
+	if err := dbutils.InitOrResetPool(poolDBCfg); err != nil {
+		panic(err)
+	}
 }
 
-// MintERC20 mint erc20 tokens
-func (m *Manager) MintERC20(ctx context.Context, erc20Addr common.Address, amount *big.Int, network NetworkSID) error {
-	client := m.clients[network]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[network])
-	if err != nil {
-		return err
-	}
-
-	var bridgeAddress = l1BridgeAddr
-	if network == L2 {
-		bridgeAddress = l2BridgeAddr
-	}
-
-	err = client.ApproveERC20(ctx, erc20Addr, common.HexToAddress(bridgeAddress), amount, auth)
-	if err != nil {
-		return err
-	}
-
-	return client.MintERC20(ctx, erc20Addr, amount, auth)
+// StartDACDB starts the data availability node DB
+func (m *Manager) StartDACDB() error {
+	return StartComponent("dac-db", func() (bool, error) { return true, nil })
 }
 
-// ApproveERC20 approves erc20 tokens
-func (m *Manager) ApproveERC20(ctx context.Context, erc20Addr, bridgeAddr common.Address, amount *big.Int, network NetworkSID) error {
-	client := m.clients[network]
-	auth, err := client.GetSigner(ctx, accHexPrivateKeys[network])
-	if err != nil {
-		return err
-	}
-	return client.ApproveERC20(ctx, erc20Addr, bridgeAddr, amount, auth)
+// StopDACDB stops the data availability node DB
+func (m *Manager) StopDACDB() error {
+	return StopComponent("dac-db")
 }
 
-// GetTokenWrapped get token wrapped info
-func (m *Manager) GetTokenWrapped(ctx context.Context, originNetwork uint, originalTokenAddr common.Address, isCreated bool) (*etherman.TokenWrapped, error) {
-	if isCreated {
-		if err := operations.Poll(defaultInterval, defaultDeadline, func() (bool, error) {
-			wrappedToken, err := m.storage.GetTokenWrapped(ctx, originNetwork, originalTokenAddr, nil)
-			if err != nil {
-				return false, err
-			}
-			return wrappedToken != nil, nil
-		}); err != nil {
-			return nil, err
-		}
-	}
-	return m.storage.GetTokenWrapped(ctx, originNetwork, originalTokenAddr, nil)
+// StartPermissionlessNodeForcedToSYncThroughDAC starts a permissionless node that is froced to sync through the DAC
+func (m *Manager) StartPermissionlessNodeForcedToSYncThroughDAC() error {
+	return StartComponent("permissionless-dac", func() (bool, error) { return true, nil })
 }
 
-// UpdateBlocksForTesting updates the hash of blocks.
-func (m *Manager) UpdateBlocksForTesting(ctx context.Context, networkID uint, blockNum uint64) error {
-	return m.storage.UpdateBlocksForTesting(ctx, networkID, blockNum, nil)
-}
-
-// WaitExitRootToBeSynced waits until new exit root is synced.
-func (m *Manager) WaitExitRootToBeSynced(ctx context.Context, orgExitRoot *etherman.GlobalExitRoot, isRollup bool) error {
-	log.Debugf("WaitExitRootToBeSynced: %v", orgExitRoot)
-	if orgExitRoot == nil {
-		orgExitRoot = &etherman.GlobalExitRoot{
-			ExitRoots: []common.Hash{{}, {}},
-		}
-	}
-	return operations.Poll(defaultInterval, waitRootSyncDeadline, func() (bool, error) {
-		exitRoot, err := m.storage.GetLatestExitRoot(ctx, isRollup, nil)
-		if err != nil {
-			if err == gerror.ErrStorageNotFound {
-				return false, nil
-			}
-			return false, err
-		}
-		tID := 0
-		if isRollup {
-			tID = 1
-		}
-		return exitRoot.ExitRoots[tID] != orgExitRoot.ExitRoots[tID], nil
-	})
-}
-
-func (m *Manager) GetLatestMonitoredTxGroupID(ctx context.Context) (uint64, error) {
-	return m.storage.GetLatestMonitoredTxGroupID(ctx, nil)
+// StopPermissionlessNodeForcedToSYncThroughDAC stops the permissionless node that is froced to sync through the DAC
+func (m *Manager) StopPermissionlessNodeForcedToSYncThroughDAC() error {
+	return StopComponent("permissionless-dac")
 }

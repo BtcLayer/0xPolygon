@@ -18,8 +18,6 @@ const (
 	double       = 2
 	ether155V    = 27
 	etherPre155V = 35
-	// MaxEffectivePercentage is the maximum value that can be used as effective percentage
-	MaxEffectivePercentage = uint8(255)
 	// Decoding constants
 	headerByteLength uint64 = 1
 	sLength          uint64 = 32
@@ -39,7 +37,7 @@ func EncodeTransactions(txs []types.Transaction, effectivePercentages []uint8, f
 	var batchL2Data []byte
 
 	for i, tx := range txs {
-		txData, err := prepareRLPTxData(tx)
+		txData, err := prepareRPLTxData(tx)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +55,7 @@ func EncodeTransactions(txs []types.Transaction, effectivePercentages []uint8, f
 	return batchL2Data, nil
 }
 
-func prepareRLPTxData(tx types.Transaction) ([]byte, error) {
+func prepareRPLTxData(tx types.Transaction) ([]byte, error) {
 	v, r, s := tx.RawSignatureValues()
 	sign := 1 - (v.Uint64() & 1)
 
@@ -99,7 +97,7 @@ func EncodeTransactionsWithoutEffectivePercentage(txs []types.Transaction) ([]by
 	var batchL2Data []byte
 
 	for _, tx := range txs {
-		txData, err := prepareRLPTxData(tx)
+		txData, err := prepareRPLTxData(tx)
 		if err != nil {
 			return nil, err
 		}

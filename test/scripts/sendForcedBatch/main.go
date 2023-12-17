@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/pol"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/etrogpolygonrollupmanager"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/etrogpolygonzkevm"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonrollupmanager"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/0xPolygonHermez/zkevm-node/test/operations"
 	"github.com/ethereum/go-ethereum"
@@ -125,13 +125,13 @@ func sendForcedBatches(cliCtx *cli.Context) error {
 	}
 	// Create smc client
 	zkevmAddr := common.HexToAddress(cliCtx.String(flagZkevmAddrName))
-	zkevm, err := etrogpolygonzkevm.NewEtrogpolygonzkevm(zkevmAddr, ethClient)
+	zkevm, err := polygonzkevm.NewPolygonzkevm(zkevmAddr, ethClient)
 	if err != nil {
 		return err
 	}
 
 	rollupManagerAddr := common.HexToAddress(cliCtx.String(flagRollupManagerAddrName))
-	rollupManager, err := etrogpolygonrollupmanager.NewEtrogpolygonrollupmanager(rollupManagerAddr, ethClient)
+	rollupManager, err := polygonrollupmanager.NewPolygonrollupmanager(rollupManagerAddr, ethClient)
 	if err != nil {
 		return err
 	}

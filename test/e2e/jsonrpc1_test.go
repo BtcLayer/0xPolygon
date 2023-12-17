@@ -72,7 +72,6 @@ func Test_Filters(t *testing.T) {
 	}
 	ctx := context.Background()
 	setup()
-
 	defer teardown()
 	for _, network := range networks {
 		// test newBlockFilter creation
@@ -89,9 +88,9 @@ func Test_Filters(t *testing.T) {
 
 		// test newFilter creation with block range and block hash
 		response, err = client.JSONRPCCall(network.URL, "eth_newFilter", map[string]interface{}{
-			"blockHash": common.HexToHash("0x1"),
-			"fromBlock": "0x1",
-			"toBlock":   "0x2",
+			"BlockHash": common.HexToHash("0x1"),
+			"FromBlock": "0x1",
+			"ToBlock":   "0x2",
 		})
 		require.NoError(t, err)
 		require.NotNil(t, response.Error)
@@ -100,11 +99,11 @@ func Test_Filters(t *testing.T) {
 
 		// test newFilter creation with block hash
 		response, err = client.JSONRPCCall(network.URL, "eth_newFilter", map[string]interface{}{
-			"blockHash": common.HexToHash("0x1"),
-			"address": []common.Address{
+			"BlockHash": common.HexToHash("0x1"),
+			"Addresses": []common.Address{
 				common.HexToAddress("0x2"),
 			},
-			"topics": [][]common.Hash{
+			"Topics": [][]common.Hash{
 				{common.HexToHash("0x3")},
 			},
 		})
@@ -119,12 +118,12 @@ func Test_Filters(t *testing.T) {
 
 		// test newFilter creation with block range
 		response, err = client.JSONRPCCall(network.URL, "eth_newFilter", map[string]interface{}{
-			"fromBlock": "0x1",
-			"toBlock":   "0x2",
-			"address": []common.Address{
+			"FromBlock": "0x1",
+			"ToBlock":   "0x2",
+			"Addresses": []common.Address{
 				common.HexToAddress("0x2"),
 			},
-			"topics": [][]common.Hash{
+			"Topics": [][]common.Hash{
 				{common.HexToHash("0x3")},
 			},
 		})
@@ -212,7 +211,7 @@ func Test_Filters(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.NotEqual(t, blockBeforeFilterHash.String(), blockFilterChanges[0].String())
-		assert.Equal(t, blockAfterFilterHash.String(), blockFilterChanges[len(blockFilterChanges)-1].String(), "network: "+network.Name+"blockAfterFilterHash")
+		assert.Equal(t, blockAfterFilterHash.String(), blockFilterChanges[len(blockFilterChanges)-1].String())
 
 		// test getFilterChanges for a logFilter ID
 		// create a SC to emit some logs
@@ -222,7 +221,7 @@ func Test_Filters(t *testing.T) {
 		require.NoError(t, err)
 
 		response, err = client.JSONRPCCall(network.URL, "eth_newFilter", map[string]interface{}{
-			"address": []common.Address{scAddr},
+			"Addresses": []common.Address{scAddr},
 		})
 		require.NoError(t, err)
 		require.Nil(t, response.Error)
@@ -278,7 +277,7 @@ func Test_Filters(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 30, len(logs))
-		assert.Equal(t, 20, len(logFilterChanges), "network: "+network.Name+" logFilterChanges")
+		assert.Equal(t, 20, len(logFilterChanges))
 	}
 }
 

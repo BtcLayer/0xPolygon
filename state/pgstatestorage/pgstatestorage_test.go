@@ -110,11 +110,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	mtr, err := l1infotree.NewL1InfoTreeRecursive(32)
-	if err != nil {
-		panic(err)
-	}
-	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(stateCfg, stateDb), executorClient, stateTree, eventLog, mt, mtr)
+	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(stateCfg, stateDb), executorClient, stateTree, eventLog, mt)
 
 	result := m.Run()
 
@@ -463,7 +459,7 @@ func TestCleanupLockedProofs(t *testing.T) {
 	batchNumber := uint64(42)
 	_, err = testState.Exec(ctx, "INSERT INTO state.batch (batch_num,wip) VALUES ($1, FALSE), ($2, FALSE), ($3, FALSE)", batchNumber, batchNumber+1, batchNumber+2)
 	require.NoError(err)
-	const addGeneratedProofSQL = "INSERT INTO state.batch_proof (batch_num, batch_num_final, proof, proof_id, input_prover, prover, prover_id, generating_since, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+	const addGeneratedProofSQL = "INSERT INTO state.proof (batch_num, batch_num_final, proof, proof_id, input_prover, prover, prover_id, generating_since, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
 	// proof with `generating_since` older than interval
 	now := time.Now().Round(time.Microsecond)
 	oneHourAgo := now.Add(-time.Hour).Round(time.Microsecond)
@@ -500,10 +496,10 @@ func TestCleanupLockedProofs(t *testing.T) {
 	_, err = testState.Exec(ctx, addGeneratedProofSQL, olderNotGenProof.BatchNumber, olderNotGenProof.BatchNumberFinal, olderNotGenProof.Proof, olderNotGenProof.ProofID, olderNotGenProof.InputProver, olderNotGenProof.Prover, olderNotGenProof.ProverID, olderNotGenProof.GeneratingSince, oneHourAgo, oneHourAgo)
 	require.NoError(err)
 
-	_, err = testState.CleanupLockedBatchProofs(ctx, "1m", nil)
+	_, err = testState.CleanupLockedProofs(ctx, "1m", nil)
 
 	require.NoError(err)
-	rows, err := testState.Query(ctx, "SELECT batch_num, batch_num_final, proof, proof_id, input_prover, prover, prover_id, generating_since, created_at, updated_at FROM state.batch_proof")
+	rows, err := testState.Query(ctx, "SELECT batch_num, batch_num_final, proof, proof_id, input_prover, prover, prover_id, generating_since, created_at, updated_at FROM state.proof")
 	require.NoError(err)
 	proofs := make([]state.Proof, 0, len(rows.RawValues()))
 	for rows.Next() {
@@ -885,11 +881,7 @@ func TestGetLogs(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	mtr, err := l1infotree.NewL1InfoTreeRecursive(32)
-	if err != nil {
-		panic(err)
-	}
-	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(cfg, stateDb), executorClient, stateTree, nil, mt, mtr)
+	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(cfg, stateDb), executorClient, stateTree, nil, mt)
 
 	dbTx, err := testState.BeginStateTransaction(ctx)
 	require.NoError(t, err)
@@ -1086,11 +1078,7 @@ func TestGetLogsByBlockNumber(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	mtr, err := l1infotree.NewL1InfoTreeRecursive(32)
-	if err != nil {
-		panic(err)
-	}
-	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(cfg, stateDb), executorClient, stateTree, nil, mt, mtr)
+	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(cfg, stateDb), executorClient, stateTree, nil, mt)
 
 	dbTx, err := testState.BeginStateTransaction(ctx)
 	require.NoError(t, err)
@@ -1268,11 +1256,7 @@ func TestGetNativeBlockHashesInRange(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	mtr, err := l1infotree.NewL1InfoTreeRecursive(32)
-	if err != nil {
-		panic(err)
-	}
-	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(cfg, stateDb), executorClient, stateTree, nil, mt, mtr)
+	testState = state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(cfg, stateDb), executorClient, stateTree, nil, mt)
 
 	dbTx, err := testState.BeginStateTransaction(ctx)
 	require.NoError(t, err)
@@ -1385,6 +1369,108 @@ func TestGetNativeBlockHashesInRange(t *testing.T) {
 	}
 
 	require.NoError(t, dbTx.Commit(ctx))
+}
+
+func TestGetBatchL2DataByNumber(t *testing.T) {
+	// Init database instance
+	initOrResetDB()
+	ctx := context.Background()
+	tx, err := testState.BeginStateTransaction(ctx)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, tx.Commit(ctx)) }()
+
+	// empty case
+	var batchNum uint64 = 4
+	const (
+		openBatchSQL    = "INSERT INTO state.batch (batch_num, raw_txs_data, wip) VALUES ($1, $2, false)"
+		resetBatchesSQL = "DELETE FROM state.batch"
+	)
+	_, err = tx.Exec(ctx, openBatchSQL, batchNum, nil)
+	require.NoError(t, err)
+	data, err := testState.GetBatchL2DataByNumber(ctx, batchNum, tx)
+	require.NoError(t, err)
+	assert.Nil(t, data)
+
+	// not empty case
+	expectedData := []byte("foo bar")
+	batchNum = 5
+	_, err = tx.Exec(ctx, openBatchSQL, batchNum, expectedData)
+	require.NoError(t, err)
+	actualData, err := testState.GetBatchL2DataByNumber(ctx, batchNum, tx)
+	require.NoError(t, err)
+	assert.Equal(t, expectedData, actualData)
+
+	multiGet := []uint64{uint64(4), uint64(5), uint64(6)}
+	allData, err := testState.GetBatchL2DataByNumbers(ctx, multiGet, tx)
+	require.NoError(t, err)
+	require.Equal(t, expectedData, allData[uint64(5)])
+
+	// Force backup
+	_, err = tx.Exec(ctx, resetBatchesSQL)
+	require.NoError(t, err)
+
+	// Get batch 4 from backup
+	batchNum = 4
+	data, err = testState.GetBatchL2DataByNumber(ctx, batchNum, tx)
+	require.NoError(t, err)
+	assert.Nil(t, data)
+
+	// Get batch 5 from backup
+	batchNum = 5
+	actualData, err = testState.GetBatchL2DataByNumber(ctx, batchNum, tx)
+	require.NoError(t, err)
+	assert.Equal(t, expectedData, actualData)
+
+	// Update batch 5 and get it from backup
+	expectedData = []byte("new foo bar")
+	_, err = tx.Exec(ctx, openBatchSQL, batchNum, expectedData)
+	require.NoError(t, err)
+	_, err = tx.Exec(ctx, resetBatchesSQL)
+	require.NoError(t, err)
+	actualData, err = testState.GetBatchL2DataByNumber(ctx, batchNum, tx)
+	require.NoError(t, err)
+	assert.Equal(t, expectedData, actualData)
+}
+
+func TestGetBatchL2DataByNumbers(t *testing.T) {
+	initOrResetDB()
+	ctx := context.Background()
+	tx, err := testState.BeginStateTransaction(ctx)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, tx.Commit(ctx)) }()
+
+	var i1, i2, i3, i4, i5 = uint64(1), uint64(2), uint64(3), uint64(4), uint64(5)
+	var d1, d2, d4 = []byte("foobar"), []byte("dingbat"), []byte{0xb}
+
+	const insertBatch = "INSERT INTO state.batch (batch_num, raw_txs_data) VALUES ($1, $2)"
+	_, err = tx.Exec(ctx, insertBatch, i1, d1)
+	require.NoError(t, err)
+	_, err = tx.Exec(ctx, insertBatch, i2, d2)
+	require.NoError(t, err)
+	_, err = tx.Exec(ctx, insertBatch, i3, nil)
+	require.NoError(t, err)
+
+	// Add a forced batch too, needs a block
+	block1 := *block
+	block1.BlockNumber = 1000
+	err = testState.AddBlock(ctx, &block1, tx)
+	require.NoError(t, err)
+	err = tx.Commit(ctx)
+	require.NoError(t, err)
+
+	tx, err = testState.BeginStateTransaction(ctx)
+	require.NoError(t, err)
+
+	const insertForcedBatch = "INSERT INTO state.forced_batch (forced_batch_num, timestamp, raw_txs_data, block_num) VALUES (4, now(),'0b', 1000)"
+	_, err = testState.Exec(ctx, insertForcedBatch)
+	require.NoError(t, err)
+
+	allData, err := testState.GetForcedBatchDataByNumbers(ctx, []uint64{i4}, tx)
+	require.NoError(t, err)
+	assert.Equal(t, d4, allData[i4])
+
+	_, ok := allData[i5]
+	assert.False(t, ok)
 }
 
 func createL1InfoTreeExitRootStorageEntryForTest(blockNumber uint64, index uint32) *state.L1InfoTreeExitRootStorageEntry {
@@ -1588,6 +1674,13 @@ func TestGetForcedBatch(t *testing.T) {
 	require.Equal(t, uint64(2002), fb.BlockNumber)
 	require.Equal(t, "0x717e05de47a87a7d1679e183f1c224150675f6302b7da4eaab526b2b91ae0761", fb.GlobalExitRoot.String())
 	require.Equal(t, []byte{0xb}, fb.RawTxsData)
+
+	// also check data retrieval
+	fbData, err := testState.GetForcedBatchDataByNumbers(ctx, []uint64{1}, dbTx)
+	require.NoError(t, err)
+	var expected = make(map[uint64][]byte)
+	expected[uint64(1)] = []byte{0xb}
+	require.Equal(t, expected, fbData)
 }
 
 func TestGetLastGER(t *testing.T) {
@@ -1664,49 +1757,6 @@ func TestGetLastGER(t *testing.T) {
 	ger, err = testState.GetLatestBatchGlobalExitRoot(ctx, dbTx)
 	require.NoError(t, err)
 	require.Equal(t, common.HexToHash("0x2").String(), ger.String())
-
-}
-
-func TestAddBlobSequence(t *testing.T) {
-	initOrResetDB()
-	ctx := context.Background()
-	dbTx, err := testState.BeginStateTransaction(ctx)
-	require.NoError(t, err)
-	defer func() { require.NoError(t, dbTx.Commit(ctx)) }()
-
-	block := state.NewBlock(100)
-	err = testState.AddBlock(ctx, block, dbTx)
-	require.NoError(t, err)
-
-	blobSeq := state.BlobSequence{
-		BlobSequenceIndex: 1,
-		BlockNumber:       100,
-	}
-	err = testState.AddBlobSequence(ctx, &blobSeq, dbTx)
-	require.NoError(t, err)
-}
-
-func TestStoreBlobInner(t *testing.T) {
-	initOrResetDB()
-	ctx := context.Background()
-	dbTx, err := testState.BeginStateTransaction(ctx)
-	require.NoError(t, err)
-	defer func() { require.NoError(t, dbTx.Commit(ctx)) }()
-	block := state.NewBlock(100)
-	err = testState.AddBlock(ctx, block, dbTx)
-	require.NoError(t, err)
-
-	blobSeq := state.BlobSequence{
-		BlobSequenceIndex: 1,
-		BlockNumber:       100,
-	}
-	err = testState.AddBlobSequence(ctx, &blobSeq, dbTx)
-	require.NoError(t, err)
-	blobInner := state.BlobInner{
-		BlobSequenceIndex: 1,
-	}
-	err = testState.AddBlobInner(ctx, &blobInner, dbTx)
-	require.NoError(t, err)
 }
 
 func TestGetFirstUncheckedBlock(t *testing.T) {

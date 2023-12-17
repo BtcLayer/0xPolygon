@@ -21,13 +21,6 @@ type StateGetBatchByNumberInterface interface {
 	GetBatchByNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) (*state.Batch, error)
 }
 
-type StateLastBlockGetter interface {
-	GetLastBlock(ctx context.Context, dbTx pgx.Tx) (*state.Block, error)
-}
-
-type StateBlobSequencer interface {
-}
-
 // StateFullInterface gathers the methods required to interact with the state.
 type StateFullInterface interface {
 	GetLastBlock(ctx context.Context, dbTx pgx.Tx) (*state.Block, error)
@@ -73,7 +66,6 @@ type StateFullInterface interface {
 	GetForkIDByBlockNumber(blockNumber uint64) uint64
 	GetStoredFlushID(ctx context.Context) (uint64, string, error)
 	AddL1InfoTreeLeaf(ctx context.Context, L1InfoTreeLeaf *state.L1InfoTreeLeaf, dbTx pgx.Tx) (*state.L1InfoTreeExitRootStorageEntry, error)
-	AddL1InfoTreeRecursiveLeaf(ctx context.Context, L1InfoTreeLeaf *state.L1InfoTreeLeaf, dbTx pgx.Tx) (*state.L1InfoTreeExitRootStorageEntry, error)
 	StoreL2Block(ctx context.Context, batchNumber uint64, l2Block *state.ProcessBlockResponse, txsEGPLog []*state.EffectiveGasPriceLog, dbTx pgx.Tx) (common.Hash, error)
 	GetL1InfoRootLeafByL1InfoRoot(ctx context.Context, l1InfoRoot common.Hash, dbTx pgx.Tx) (state.L1InfoTreeExitRootStorageEntry, error)
 	UpdateWIPBatch(ctx context.Context, receipt state.ProcessingReceipt, dbTx pgx.Tx) error
@@ -84,11 +76,7 @@ type StateFullInterface interface {
 	UpdateForkIDBlockNumber(ctx context.Context, forkdID uint64, newBlockNumber uint64, updateMemCache bool, dbTx pgx.Tx) error
 	GetLastL2BlockNumber(ctx context.Context, dbTx pgx.Tx) (uint64, error)
 	GetL2BlockByNumber(ctx context.Context, blockNumber uint64, dbTx pgx.Tx) (*state.L2Block, error)
-	GetLastBlobSequence(ctx context.Context, dbTx pgx.Tx) (*state.BlobSequence, error)
-	AddBlobSequence(ctx context.Context, blobSequence *state.BlobSequence, dbTx pgx.Tx) error
-	GetL1InfoRecursiveRootLeafByIndex(ctx context.Context, l1InfoTreeIndex uint32, dbTx pgx.Tx) (state.L1InfoTreeExitRootStorageEntry, error)
-	ProcessBlobInner(ctx context.Context, request state.ProcessBlobInnerProcessRequest, data []byte) (*state.ProcessBlobInnerResponse, error)
-	AddBlobInner(ctx context.Context, blobInner *state.BlobInner, dbTx pgx.Tx) error
 	GetUncheckedBlocks(ctx context.Context, fromBlockNumber uint64, toBlockNumber uint64, dbTx pgx.Tx) ([]*state.Block, error)
 	GetPreviousBlockToBlockNumber(ctx context.Context, blockNumber uint64, dbTx pgx.Tx) (*state.Block, error)
+	UpdateBatchTimestamp(ctx context.Context, batchNumber uint64, timestamp time.Time, dbTx pgx.Tx) error
 }

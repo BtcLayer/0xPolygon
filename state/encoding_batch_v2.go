@@ -2,13 +2,7 @@
 This file provide functions to work with ETROG batches:
 - EncodeBatchV2 (equivalent to EncodeTransactions)
 - DecodeBatchV2 (equivalent to DecodeTxs)
-- DecodeForcedBatchV2
-
-Also provide a builder class to create batches (BatchV2Encoder):
- This method doesnt check anything, so is more flexible but you need to know what you are doing
- - `builder := NewBatchV2Encoder()` : Create a new `BatchV2Encoder``
- - You can call to `AddBlockHeader` or `AddTransaction` to add a block header or a transaction as you wish
- - You can call to `GetResult` to get the batch data
+- DecodeForcedBatchV2)
 
 
 // batch data format:
@@ -33,25 +27,11 @@ Also provide a builder class to create batches (BatchV2Encoder):
 // 0x00							   | 32 | V
 // 0x00							   | 1  | efficiencyPercentage
 // Repeat Transaction
-//
-// Usage:
-// There are 2 ways of use this module, direct calls or a builder class:
-// 1) Direct calls:
-// - EncodeBatchV2: Encode a batch of transactions
-// - DecodeBatchV2: Decode a batch of transactions
-//
-// 2) Builder class:
-//  This method doesnt check anything, so is more flexible but you need to know what you are doing
-// - builder := NewBatchV2Encoder(): Create a new BatchV2Encoder
-//    - You can call to `AddBlockHeader` or `AddTransaction` to add a block header or a transaction as you wish
-//    - You can call to `GetResult` to get the batch data
-
 */
 
 package state
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -62,16 +42,11 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
-// ChangeL2BlockHeader is the header of a L2 block.
-type ChangeL2BlockHeader struct {
-	DeltaTimestamp  uint32
-	IndexL1InfoTree uint32
-}
-
 // L2BlockRaw is the raw representation of a L2 block.
 type L2BlockRaw struct {
-	ChangeL2BlockHeader
-	Transactions []L2TxRaw
+	DeltaTimestamp  uint32
+	IndexL1InfoTree uint32
+	Transactions    []L2TxRaw
 }
 
 // BatchRawV2 is the  representation of a batch of transactions.
@@ -86,15 +61,12 @@ type ForcedBatchRawV2 struct {
 
 // L2TxRaw is the raw representation of a L2 transaction  inside a L2 block.
 type L2TxRaw struct {
-	EfficiencyPercentage uint8             // valid always
-	TxAlreadyEncoded     bool              // If true the tx is already encoded (data field is used)
-	Tx                   types.Transaction // valid if TxAlreadyEncoded == false
-	Data                 []byte            // valid if TxAlreadyEncoded == true
+	Tx                   types.Transaction
+	EfficiencyPercentage uint8
 }
 
 const (
 	changeL2Block = uint8(0x0b)
-	sizeUInt32    = 4
 )
 
 var (
@@ -120,86 +92,55 @@ func (b *BatchRawV2) String() string {
 
 // EncodeBatchV2 encodes a batch of transactions into a byte slice.
 func EncodeBatchV2(batch *BatchRawV2) ([]byte, error) {
+	var err error
+	var batchData []byte
 	if batch == nil {
 		return nil, fmt.Errorf("batch is nil: %w", ErrInvalidBatchV2)
 	}
-	if len(batch.Blocks) == 0 {
+	blocks := batch.Blocks
+	if len(blocks) == 0 {
 		return nil, fmt.Errorf("a batch need minimum a L2Block: %w", ErrInvalidBatchV2)
 	}
-
-	encoder := NewBatchV2Encoder()
-	for _, block := range batch.Blocks {
-		encoder.AddBlockHeader(block.ChangeL2BlockHeader)
-		err := encoder.AddTransactions(block.Transactions)
+	for _, block := range blocks {
+		batchData, err = EncodeBlockHeaderV2(batchData, block)
 		if err != nil {
-			return nil, fmt.Errorf("can't encode tx: %w", err)
+			return nil, fmt.Errorf("can't encode block header: %w", err)
+		}
+		for _, tx := range block.Transactions {
+			batchData, err = encodeTxRLP(batchData, tx)
+			if err != nil {
+				return nil, fmt.Errorf("can't encode tx: %w", err)
+			}
 		}
 	}
-	return encoder.GetResult(), nil
+	return batchData, nil
 }
 
-// BatchV2Encoder is a builder of the batchl2data used by EncodeBatchV2
-type BatchV2Encoder struct {
-	batchData []byte
-}
-
-// NewBatchV2Encoder creates a new BatchV2Encoder.
-func NewBatchV2Encoder() *BatchV2Encoder {
-	return &BatchV2Encoder{}
-}
-
-// AddBlockHeader adds a block header to the batch.
-func (b *BatchV2Encoder) AddBlockHeader(l2BlockHeader ChangeL2BlockHeader) {
-	b.batchData = l2BlockHeader.Encode(b.batchData)
-}
-
-// AddTransactions adds a set of transactions to the batch.
-func (b *BatchV2Encoder) AddTransactions(transactions []L2TxRaw) error {
-	for _, tx := range transactions {
-		err := b.AddTransaction(tx)
-		if err != nil {
-			return fmt.Errorf("can't encode tx: %w", err)
-		}
-	}
-	return nil
-}
-
-// AddTransaction adds a transaction to the batch.
-func (b *BatchV2Encoder) AddTransaction(transaction L2TxRaw) error {
-	var err error
-	b.batchData, err = transaction.Encode(b.batchData)
-	if err != nil {
-		return fmt.Errorf("can't encode tx: %w", err)
-	}
-	return nil
-}
-
-// GetResult returns the batch data.
-func (b *BatchV2Encoder) GetResult() []byte {
-	return b.batchData
-}
-
-// Encode encodes a batch of l2blocks header into a byte slice.
-func (c ChangeL2BlockHeader) Encode(batchData []byte) []byte {
+// EncodeBlockHeaderV2 encodes a batch of l2blocks header into a byte slice.
+func EncodeBlockHeaderV2(batchData []byte, block L2BlockRaw) ([]byte, error) {
 	batchData = append(batchData, changeL2Block)
-	batchData = append(batchData, encodeUint32(c.DeltaTimestamp)...)
-	batchData = append(batchData, encodeUint32(c.IndexL1InfoTree)...)
-	return batchData
+	batchData = append(batchData, serializeUint32(block.DeltaTimestamp)...)
+	batchData = append(batchData, serializeUint32(block.IndexL1InfoTree)...)
+	return batchData, nil
 }
 
-// Encode encodes a transaction into a byte slice.
-func (tx L2TxRaw) Encode(batchData []byte) ([]byte, error) {
-	if tx.TxAlreadyEncoded {
-		batchData = append(batchData, tx.Data...)
-	} else {
-		rlpTx, err := prepareRLPTxData(tx.Tx)
-		if err != nil {
-			return nil, fmt.Errorf("can't encode tx to RLP: %w", err)
-		}
-		batchData = append(batchData, rlpTx...)
+func encodeTxRLP(batchData []byte, tx L2TxRaw) ([]byte, error) {
+	rlpTx, err := prepareRPLTxData(tx.Tx)
+	if err != nil {
+		return nil, fmt.Errorf("can't encode tx to RLP: %w", err)
 	}
+	batchData = append(batchData, rlpTx...)
 	batchData = append(batchData, tx.EfficiencyPercentage)
 	return batchData, nil
+}
+
+func serializeUint32(value uint32) []byte {
+	return []byte{
+		byte(value >> 24), // nolint:gomnd
+		byte(value >> 16), // nolint:gomnd
+		byte(value >> 8),  // nolint:gomnd
+		byte(value),
+	} // nolint:gomnd
 }
 
 // DecodeBatchV2 decodes a batch of transactions from a byte slice.
@@ -223,7 +164,7 @@ func DecodeBatchV2(txsData []byte) (*BatchRawV2, error) {
 		// is a tx
 		default:
 			if currentBlock == nil {
-				_, _, err := DecodeTxRLP(txsData, pos)
+				_, _, err := decodeTxRLP(txsData, pos)
 				if err == nil {
 					// There is no changeL2Block but have a valid RLP transaction
 					return nil, ErrBatchV2DontStartWithChangeL2Block
@@ -233,7 +174,7 @@ func DecodeBatchV2(txsData []byte) (*BatchRawV2, error) {
 				}
 			}
 			var tx *L2TxRaw
-			pos, tx, err = DecodeTxRLP(txsData, pos)
+			pos, tx, err = decodeTxRLP(txsData, pos)
 			if err != nil {
 				return nil, fmt.Errorf("can't decode transactions: %w", err)
 			}
@@ -274,11 +215,11 @@ func DecodeForcedBatchV2(txsData []byte) (*ForcedBatchRawV2, error) {
 func decodeBlockHeader(txsData []byte, pos int) (int, *L2BlockRaw, error) {
 	var err error
 	currentBlock := &L2BlockRaw{}
-	pos, currentBlock.DeltaTimestamp, err = decodeUint32(txsData, pos)
+	pos, currentBlock.DeltaTimestamp, err = deserializeUint32(txsData, pos)
 	if err != nil {
 		return 0, nil, fmt.Errorf("can't get deltaTimestamp: %w", err)
 	}
-	pos, currentBlock.IndexL1InfoTree, err = decodeUint32(txsData, pos)
+	pos, currentBlock.IndexL1InfoTree, err = deserializeUint32(txsData, pos)
 	if err != nil {
 		return 0, nil, fmt.Errorf("can't get leafIndex: %w", err)
 	}
@@ -286,8 +227,7 @@ func decodeBlockHeader(txsData []byte, pos int) (int, *L2BlockRaw, error) {
 	return pos, currentBlock, nil
 }
 
-// DecodeTxRLP decodes a transaction from a byte slice.
-func DecodeTxRLP(txsData []byte, offset int) (int, *L2TxRaw, error) {
+func decodeTxRLP(txsData []byte, offset int) (int, *L2TxRaw, error) {
 	var err error
 	length, err := decodeRLPListLengthFromOffset(txsData, offset)
 	if err != nil {
@@ -325,6 +265,13 @@ func DecodeTxRLP(txsData []byte, offset int) (int, *L2TxRaw, error) {
 	return int(endPos), l2Tx, err
 }
 
+func deserializeUint32(txsData []byte, pos int) (int, uint32, error) {
+	if len(txsData)-pos < 4 { // nolint:gomnd
+		return 0, 0, fmt.Errorf("can't get u32 because not enough data: %w", ErrInvalidBatchV2)
+	}
+	return pos + 4, uint32(txsData[pos])<<24 | uint32(txsData[pos+1])<<16 | uint32(txsData[pos+2])<<8 | uint32(txsData[pos+3]), nil // nolint:gomnd
+}
+
 // It returns the length of data from the param offset
 // ex:
 // 0xc0 -> empty data -> 1 byte because it include the 0xc0
@@ -354,17 +301,4 @@ func decodeRLPListLengthFromOffset(txsData []byte, offset int) (uint64, error) {
 		length = n + num - f7 // num - f7 is the header. For example 0xf7
 	}
 	return length + headerByteLength, nil
-}
-
-func encodeUint32(value uint32) []byte {
-	data := make([]byte, sizeUInt32)
-	binary.BigEndian.PutUint32(data, value)
-	return data
-}
-
-func decodeUint32(txsData []byte, pos int) (int, uint32, error) {
-	if len(txsData)-pos < sizeUInt32 {
-		return 0, 0, fmt.Errorf("can't get u32 because not enough data: %w", ErrInvalidBatchV2)
-	}
-	return pos + sizeUInt32, binary.BigEndian.Uint32(txsData[pos : pos+sizeUInt32]), nil
 }

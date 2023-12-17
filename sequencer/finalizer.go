@@ -259,15 +259,15 @@ func (f *finalizer) checkValidL1InfoRoot(ctx context.Context, l1InfoRoot state.L
 		return false, nil
 	}
 
-	// Check l1InfoRootIndex and GER matches
-	// We retrieve first the info of the last l1InfoTree event in the block
+	// Check l1InfoRootIndex and GER matches. We retrieve the info of the last l1InfoTree event in the block, since in the case we have several l1InfoTree events
+	// in the same block, the function checkL1InfoTreeUpdate retrieves only the last one and skips the others
 	log.Debugf("getting l1InfoRoot events for L1 block %d, hash: %s", l1InfoRoot.BlockNumber, l1BlockState.BlockHash)
 	blocks, eventsOrder, err := f.etherman.GetRollupInfoByBlockRange(ctx, l1InfoRoot.BlockNumber, &l1InfoRoot.BlockNumber)
 	if err != nil {
 		return false, err
 	}
 
-	// Since in the case we have several l1InfoTree events in the same block, we retrieve only the GER of last one and skips the others
+	//Get L1InfoTree events of the L1 block where the l1InforRoot we need to check was synced
 	lastGER := state.ZeroHash
 	for _, block := range blocks {
 		blockEventsOrder := eventsOrder[block.BlockHash]
@@ -404,26 +404,9 @@ func (f *finalizer) finalizeBatches(ctx context.Context) {
 			f.finalizeWIPL2Block(ctx)
 		}
 
-		tx, oocTxs, err := f.workerIntf.GetBestFittingTx(f.wipBatch.imRemainingResources, f.wipBatch.imHighReservedZKCounters, (f.wipBatch.countOfL2Blocks == 0 && f.wipL2Block.isEmpty()))
+		tx, err := f.workerIntf.GetBestFittingTx(f.wipBatch.imRemainingResources, f.wipBatch.imHighReservedZKCounters)
 
-		// Set as invalid txs in the worker pool that will never fit into an empty batch
-		for _, oocTx := range oocTxs {
-			log.Infof("tx %s doesn't fits in empty batch %d (node OOC), setting tx as invalid in the pool", oocTx.HashStr, f.wipL2Block.trackingNum, f.wipBatch.batchNumber)
-
-			f.LogEvent(ctx, event.Level_Info, event.EventID_NodeOOC,
-				fmt.Sprintf("tx %s doesn't fits in empty batch %d (node OOC), from: %s, IP: %s", oocTx.HashStr, f.wipBatch.batchNumber, oocTx.FromStr, oocTx.IP), nil)
-
-			// Delete the transaction from the worker
-			f.workerIntf.DeleteTx(oocTx.Hash, oocTx.From)
-
-			errMsg := "node OOC"
-			err = f.poolIntf.UpdateTxStatus(ctx, oocTx.Hash, pool.TxStatusInvalid, false, &errMsg)
-			if err != nil {
-				log.Errorf("failed to update status to invalid in the pool for tx %s, error: %v", oocTx.Hash.String(), err)
-			}
-		}
-
-		// We have txs pending to process but none of them fits into the wip batch we close the wip batch and open a new one
+		// If we have txs pending to process but none of them fits into the wip batch, we close the wip batch and open a new one
 		if err == ErrNoFittingTransaction {
 			f.finalizeWIPBatch(ctx, state.NoTxFitsClosingReason)
 			continue
@@ -507,6 +490,7 @@ func (f *finalizer) processTransaction(ctx context.Context, tx *TxTracker, first
 		SkipWriteBlockInfoRoot_V2: true,
 		SkipVerifyL1InfoRoot_V2:   true,
 		L1InfoTreeData_V2:         map[uint32]state.L1DataV2{},
+		ExecutionMode:             executor.ExecutionMode0,
 	}
 
 	txGasPrice := tx.GasPrice
@@ -553,7 +537,7 @@ func (f *finalizer) processTransaction(ctx context.Context, tx *TxTracker, first
 		}
 	}
 
-	egpPercentage, err := f.effectiveGasPrice.CalculateEffectiveGasPricePercentage(txGasPrice, tx.EffectiveGasPrice)
+	egpPercentage, err := state.CalculateEffectiveGasPricePercentage(txGasPrice, tx.EffectiveGasPrice)
 	if err != nil {
 		if f.effectiveGasPrice.IsEnabled() {
 			return nil, err
@@ -669,7 +653,7 @@ func (f *finalizer) handleProcessTransactionResponse(ctx context.Context, tx *Tx
 
 			// If EffectiveGasPrice is disabled we will calculate the percentage and save it for later logging
 			if !egpEnabled {
-				effectivePercentage, err := f.effectiveGasPrice.CalculateEffectiveGasPricePercentage(txGasPrice, tx.EffectiveGasPrice)
+				effectivePercentage, err := state.CalculateEffectiveGasPricePercentage(txGasPrice, tx.EffectiveGasPrice)
 				if err != nil {
 					log.Warnf("effectiveGasPrice is disabled, but failed to calculate effective gas price percentage (#2), error: %v", err)
 					tx.EGPLog.Error = fmt.Sprintf("%s, CalculateEffectiveGasPricePercentage#2: %s", tx.EGPLog.Error, err)
@@ -707,11 +691,11 @@ func (f *finalizer) handleProcessTransactionResponse(ctx context.Context, tx *Tx
 	} else {
 		log.Infof("current tx %s needed resources exceeds the remaining batch resources, overflow resource: %s, updating metadata for tx in worker and continuing. counters: {batch: %s, used: %s, reserved: %s, needed: %s, high: %s}",
 			tx.HashStr, overflowResource, f.logZKCounters(f.wipBatch.imRemainingResources.ZKCounters), f.logZKCounters(result.UsedZkCounters), f.logZKCounters(result.ReservedZkCounters), f.logZKCounters(neededZKCounters), f.logZKCounters(f.wipBatch.imHighReservedZKCounters))
-		if err := f.batchConstraints.CheckNodeLevelOOC(result.ReservedZkCounters); err != nil {
-			log.Infof("current tx %s reserved resources exceeds the max limit for batch resources (node OOC), setting tx as invalid in the pool, error: %v", tx.HashStr, err)
+		if !f.batchConstraints.IsWithinConstraints(result.ReservedZkCounters) {
+			log.Infof("current tx %s reserved resources exceeds the max limit for batch resources (node OOC), setting tx as invalid in the pool", tx.HashStr)
 
 			f.LogEvent(ctx, event.Level_Info, event.EventID_NodeOOC,
-				fmt.Sprintf("tx %s exceeds node max limit batch resources (node OOC), from: %s, IP: %s, error: %v", tx.HashStr, tx.FromStr, tx.IP, err), nil)
+				fmt.Sprintf("tx %s exceeds node max limit batch resources (node OOC), from: %s, IP: %s", tx.HashStr, tx.FromStr, tx.IP), nil)
 
 			// Delete the transaction from the txSorted list
 			f.workerIntf.DeleteTx(tx.Hash, tx.From)

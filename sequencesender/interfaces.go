@@ -17,8 +17,8 @@ import (
 
 // etherman contains the methods required to interact with ethereum.
 type etherman interface {
-	BuildSequenceBatchesTxData(sender common.Address, sequences []ethmanTypes.Sequence, maxSequenceTimestamp uint64, initSequenceBatchNumber uint64, l2Coinbase common.Address) (to *common.Address, data []byte, err error)
-	EstimateGasSequenceBatches(sender common.Address, sequences []ethmanTypes.Sequence, maxSequenceTimestamp uint64, initSequenceBatchNumber uint64, l2Coinbase common.Address) (*types.Transaction, error)
+	BuildSequenceBatchesTxData(sender common.Address, sequences []ethmanTypes.Sequence, maxSequenceTimestamp uint64, initSequenceBatchNumber uint64, l2Coinbase common.Address, committeeSignaturesAndAddrs []byte) (to *common.Address, data []byte, err error)
+	EstimateGasSequenceBatches(sender common.Address, sequences []ethmanTypes.Sequence, maxSequenceTimestamp uint64, initSequenceBatchNumber uint64, l2Coinbase common.Address, committeeSignaturesAndAddrs []byte) (*types.Transaction, error)
 	GetLatestBlockHeader(ctx context.Context) (*types.Header, error)
 	GetLatestBatchNumber() (uint64, error)
 }
@@ -40,4 +40,8 @@ type stateInterface interface {
 type ethTxManager interface {
 	Add(ctx context.Context, owner, id string, from common.Address, to *common.Address, value *big.Int, data []byte, gasOffset uint64, dbTx pgx.Tx) error
 	ProcessPendingMonitoredTxs(ctx context.Context, owner string, failedResultHandler ethtxmanager.ResultHandler, dbTx pgx.Tx)
+}
+
+type dataAbilitier interface {
+	PostSequence(ctx context.Context, sequences []ethmanTypes.Sequence) ([]byte, error)
 }

@@ -150,7 +150,6 @@ Outputs=["stderr"]
 | Property                                          | Pattern | Type    | Deprecated | Definition | Title/Description                                                                       |
 | ------------------------------------------------- | ------- | ------- | ---------- | ---------- | --------------------------------------------------------------------------------------- |
 | - [URL](#Etherman_URL )                           | No      | string  | No         | -          | URL is the URL of the Ethereum node for L1                                              |
-| - [ConsensusL1URL](#Etherman_ConsensusL1URL )     | No      | string  | No         | -          | ConsensusL1URL is the URL of the consensus L1 RPC endpoint                              |
 | - [ForkIDChunkSize](#Etherman_ForkIDChunkSize )   | No      | integer | No         | -          | ForkIDChunkSize is the max interval for each call to L1 provider to get the forkIDs     |
 | - [MultiGasProvider](#Etherman_MultiGasProvider ) | No      | boolean | No         | -          | allow that L1 gas price calculation use multiples sources                               |
 | - [Etherscan](#Etherman_Etherscan )               | No      | object  | No         | -          | Configuration for use Etherscan as used as gas provider, basically it needs the API-KEY |
@@ -169,21 +168,7 @@ Outputs=["stderr"]
 URL="http://localhost:8545"
 ```
 
-### <a name="Etherman_ConsensusL1URL"></a>5.2. `Etherman.ConsensusL1URL`
-
-**Type:** : `string`
-
-**Default:** `""`
-
-**Description:** ConsensusL1URL is the URL of the consensus L1 RPC endpoint
-
-**Example setting the default value** (""):
-```
-[Etherman]
-ConsensusL1URL=""
-```
-
-### <a name="Etherman_ForkIDChunkSize"></a>5.3. `Etherman.ForkIDChunkSize`
+### <a name="Etherman_ForkIDChunkSize"></a>5.2. `Etherman.ForkIDChunkSize`
 
 **Type:** : `integer`
 
@@ -197,7 +182,7 @@ ConsensusL1URL=""
 ForkIDChunkSize=20000
 ```
 
-### <a name="Etherman_MultiGasProvider"></a>5.4. `Etherman.MultiGasProvider`
+### <a name="Etherman_MultiGasProvider"></a>5.3. `Etherman.MultiGasProvider`
 
 **Type:** : `boolean`
 
@@ -211,7 +196,7 @@ ForkIDChunkSize=20000
 MultiGasProvider=false
 ```
 
-### <a name="Etherman_Etherscan"></a>5.5. `[Etherman.Etherscan]`
+### <a name="Etherman_Etherscan"></a>5.4. `[Etherman.Etherscan]`
 
 **Type:** : `object`
 **Description:** Configuration for use Etherscan as used as gas provider, basically it needs the API-KEY
@@ -221,7 +206,7 @@ MultiGasProvider=false
 | - [ApiKey](#Etherman_Etherscan_ApiKey ) | No      | string | No         | -          | Need API key to use etherscan, if it's empty etherscan is not used                                                                    |
 | - [Url](#Etherman_Etherscan_Url )       | No      | string | No         | -          | URL of the etherscan API. Overwritten with a hardcoded URL: "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=" |
 
-#### <a name="Etherman_Etherscan_ApiKey"></a>5.5.1. `Etherman.Etherscan.ApiKey`
+#### <a name="Etherman_Etherscan_ApiKey"></a>5.4.1. `Etherman.Etherscan.ApiKey`
 
 **Type:** : `string`
 
@@ -235,7 +220,7 @@ MultiGasProvider=false
 ApiKey=""
 ```
 
-#### <a name="Etherman_Etherscan_Url"></a>5.5.2. `Etherman.Etherscan.Url`
+#### <a name="Etherman_Etherscan_Url"></a>5.4.2. `Etherman.Etherscan.Url`
 
 **Type:** : `string`
 
@@ -1365,18 +1350,18 @@ MaxSHA256Hashes=0
 **Description:** Configuration of service `Syncrhonizer`. For this service is also really important the value of `IsTrustedSequencer`
 because depending of this values is going to ask to a trusted node for trusted transactions or not
 
-| Property                                                                            | Pattern | Type             | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                       |
-| ----------------------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| - [SyncInterval](#Synchronizer_SyncInterval )                                       | No      | string           | No         | -          | Duration                                                                                                                                                                                                                                                |
-| - [SyncChunkSize](#Synchronizer_SyncChunkSize )                                     | No      | integer          | No         | -          | SyncChunkSize is the number of blocks to sync on each chunk                                                                                                                                                                                             |
-| - [TrustedSequencerURL](#Synchronizer_TrustedSequencerURL )                         | No      | string           | No         | -          | TrustedSequencerURL is the rpc url to connect and sync the trusted state                                                                                                                                                                                |
-| - [SyncBlockProtection](#Synchronizer_SyncBlockProtection )                         | No      | string           | No         | -          | SyncBlockProtection specify the state to sync (lastest, finalized or safe)                                                                                                                                                                              |
-| - [L1SyncCheckL2BlockHash](#Synchronizer_L1SyncCheckL2BlockHash )                   | No      | boolean          | No         | -          | L1SyncCheckL2BlockHash if is true when a batch is closed is force to check  L2Block hash against trustedNode (only apply for permissionless)                                                                                                            |
-| - [L1SyncCheckL2BlockNumberModulus](#Synchronizer_L1SyncCheckL2BlockNumberModulus ) | No      | integer          | No         | -          | L1SyncCheckL2BlockNumberModulus is the modulus used to choose the l2block to check<br />a modules 5, for instance, means check all l2block multiples of 5 (10,15,20,...)                                                                                |
-| - [L1BlockCheck](#Synchronizer_L1BlockCheck )                                       | No      | object           | No         | -          | -                                                                                                                                                                                                                                                       |
-| - [L1SynchronizationMode](#Synchronizer_L1SynchronizationMode )                     | No      | enum (of string) | No         | -          | L1SynchronizationMode define how to synchronize with L1:<br />- parallel: Request data to L1 in parallel, and process sequentially. The advantage is that executor is not blocked waiting for L1 data<br />- sequential: Request data to L1 and execute |
-| - [L1ParallelSynchronization](#Synchronizer_L1ParallelSynchronization )             | No      | object           | No         | -          | L1ParallelSynchronization Configuration for parallel mode (if L1SynchronizationMode equal to 'parallel')                                                                                                                                                |
-| - [L2Synchronization](#Synchronizer_L2Synchronization )                             | No      | object           | No         | -          | L2Synchronization Configuration for L2 synchronization                                                                                                                                                                                                  |
+| Property                                                                              | Pattern | Type             | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| - [SyncInterval](#Synchronizer_SyncInterval )                                         | No      | string           | No         | -          | Duration                                                                                                                                                                                                                                                |
+| - [SyncChunkSize](#Synchronizer_SyncChunkSize )                                       | No      | integer          | No         | -          | SyncChunkSize is the number of blocks to sync on each chunk                                                                                                                                                                                             |
+| - [TrustedSequencerURL](#Synchronizer_TrustedSequencerURL )                           | No      | string           | No         | -          | TrustedSequencerURL is the rpc url to connect and sync the trusted state                                                                                                                                                                                |
+| - [SyncBlockProtection](#Synchronizer_SyncBlockProtection )                           | No      | string           | No         | -          | SyncBlockProtection specify the state to sync (lastest, finalized or safe)                                                                                                                                                                              |
+| - [L1SyncCheckL2BlockHash](#Synchronizer_L1SyncCheckL2BlockHash )                     | No      | boolean          | No         | -          | L1SyncCheckL2BlockHash if is true when a batch is closed is force to check  L2Block hash against trustedNode (only apply for permissionless)                                                                                                            |
+| - [L1SyncCheckL2BlockNumberhModulus](#Synchronizer_L1SyncCheckL2BlockNumberhModulus ) | No      | integer          | No         | -          | L1SyncCheckL2BlockNumberhModulus is the modulus used to choose the l2block to check<br />a modules 5, for instance, means check all l2block multiples of 5 (10,15,20,...)                                                                               |
+| - [L1BlockCheck](#Synchronizer_L1BlockCheck )                                         | No      | object           | No         | -          | -                                                                                                                                                                                                                                                       |
+| - [L1SynchronizationMode](#Synchronizer_L1SynchronizationMode )                       | No      | enum (of string) | No         | -          | L1SynchronizationMode define how to synchronize with L1:<br />- parallel: Request data to L1 in parallel, and process sequentially. The advantage is that executor is not blocked waiting for L1 data<br />- sequential: Request data to L1 and execute |
+| - [L1ParallelSynchronization](#Synchronizer_L1ParallelSynchronization )               | No      | object           | No         | -          | L1ParallelSynchronization Configuration for parallel mode (if L1SynchronizationMode equal to 'parallel')                                                                                                                                                |
+| - [L2Synchronization](#Synchronizer_L2Synchronization )                               | No      | object           | No         | -          | L2Synchronization Configuration for L2 synchronization                                                                                                                                                                                                  |
 
 ### <a name="Synchronizer_SyncInterval"></a>9.1. `Synchronizer.SyncInterval`
 
@@ -1460,19 +1445,19 @@ SyncBlockProtection="safe"
 L1SyncCheckL2BlockHash=true
 ```
 
-### <a name="Synchronizer_L1SyncCheckL2BlockNumberModulus"></a>9.6. `Synchronizer.L1SyncCheckL2BlockNumberModulus`
+### <a name="Synchronizer_L1SyncCheckL2BlockNumberhModulus"></a>9.6. `Synchronizer.L1SyncCheckL2BlockNumberhModulus`
 
 **Type:** : `integer`
 
 **Default:** `600`
 
-**Description:** L1SyncCheckL2BlockNumberModulus is the modulus used to choose the l2block to check
+**Description:** L1SyncCheckL2BlockNumberhModulus is the modulus used to choose the l2block to check
 a modules 5, for instance, means check all l2block multiples of 5 (10,15,20,...)
 
 **Example setting the default value** (600):
 ```
 [Synchronizer]
-L1SyncCheckL2BlockNumberModulus=600
+L1SyncCheckL2BlockNumberhModulus=600
 ```
 
 ### <a name="Synchronizer_L1BlockCheck"></a>9.7. `[Synchronizer.L1BlockCheck]`
@@ -1889,12 +1874,13 @@ FallbackToSequentialModeOnSynchronized=false
 **Type:** : `object`
 **Description:** L2Synchronization Configuration for L2 synchronization
 
-| Property                                                                                                | Pattern | Type    | Deprecated | Definition | Title/Description                                                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------- | ------- | ------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| - [Enabled](#Synchronizer_L2Synchronization_Enabled )                                                   | No      | boolean | No         | -          | If enabled then the L2 sync process is permitted (only for permissionless)                                                                                          |
-| - [AcceptEmptyClosedBatches](#Synchronizer_L2Synchronization_AcceptEmptyClosedBatches )                 | No      | boolean | No         | -          | AcceptEmptyClosedBatches is a flag to enable or disable the acceptance of empty batches.<br />if true, the synchronizer will accept empty batches and process them. |
-| - [ReprocessFullBatchOnClose](#Synchronizer_L2Synchronization_ReprocessFullBatchOnClose )               | No      | boolean | No         | -          | ReprocessFullBatchOnClose if is true when a batch is closed is force to reprocess again                                                                             |
-| - [CheckLastL2BlockHashOnCloseBatch](#Synchronizer_L2Synchronization_CheckLastL2BlockHashOnCloseBatch ) | No      | boolean | No         | -          | CheckLastL2BlockHashOnCloseBatch if is true when a batch is closed is force to check the last L2Block hash                                                          |
+| Property                                                                                                | Pattern | Type            | Deprecated | Definition | Title/Description                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------- | ------- | --------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| - [Enabled](#Synchronizer_L2Synchronization_Enabled )                                                   | No      | boolean         | No         | -          | If enabled then the L2 sync process is permitted (only for permissionless)                                                                                          |
+| - [AcceptEmptyClosedBatches](#Synchronizer_L2Synchronization_AcceptEmptyClosedBatches )                 | No      | boolean         | No         | -          | AcceptEmptyClosedBatches is a flag to enable or disable the acceptance of empty batches.<br />if true, the synchronizer will accept empty batches and process them. |
+| - [ReprocessFullBatchOnClose](#Synchronizer_L2Synchronization_ReprocessFullBatchOnClose )               | No      | boolean         | No         | -          | ReprocessFullBatchOnClose if is true when a batch is closed is force to reprocess again                                                                             |
+| - [CheckLastL2BlockHashOnCloseBatch](#Synchronizer_L2Synchronization_CheckLastL2BlockHashOnCloseBatch ) | No      | boolean         | No         | -          | CheckLastL2BlockHashOnCloseBatch if is true when a batch is closed is force to check the last L2Block hash                                                          |
+| - [DataSourcePriority](#Synchronizer_L2Synchronization_DataSourcePriority )                             | No      | array of string | No         | -          | DataSourcePriority defines the order in which L2 batch should be retrieved: local, trusted, external                                                                |
 
 #### <a name="Synchronizer_L2Synchronization_Enabled"></a>9.10.1. `Synchronizer.L2Synchronization.Enabled`
 
@@ -1929,14 +1915,14 @@ AcceptEmptyClosedBatches=false
 
 **Type:** : `boolean`
 
-**Default:** `true`
+**Default:** `false`
 
 **Description:** ReprocessFullBatchOnClose if is true when a batch is closed is force to reprocess again
 
-**Example setting the default value** (true):
+**Example setting the default value** (false):
 ```
 [Synchronizer.L2Synchronization]
-ReprocessFullBatchOnClose=true
+ReprocessFullBatchOnClose=false
 ```
 
 #### <a name="Synchronizer_L2Synchronization_CheckLastL2BlockHashOnCloseBatch"></a>9.10.4. `Synchronizer.L2Synchronization.CheckLastL2BlockHashOnCloseBatch`
@@ -1951,6 +1937,20 @@ ReprocessFullBatchOnClose=true
 ```
 [Synchronizer.L2Synchronization]
 CheckLastL2BlockHashOnCloseBatch=true
+```
+
+#### <a name="Synchronizer_L2Synchronization_DataSourcePriority"></a>9.10.5. `Synchronizer.L2Synchronization.DataSourcePriority`
+
+**Type:** : `array of string`
+
+**Default:** `["local", "trusted", "external"]`
+
+**Description:** DataSourcePriority defines the order in which L2 batch should be retrieved: local, trusted, external
+
+**Example setting the default value** (["local", "trusted", "external"]):
+```
+[Synchronizer.L2Synchronization]
+DataSourcePriority=["local", "trusted", "external"]
 ```
 
 ## <a name="Sequencer"></a>10. `[Sequencer]`
@@ -2503,8 +2503,6 @@ EnableLog=true
 | - [Log](#Sequencer_StreamServer_Log )                                         | No      | object  | No         | -          | Log is the log configuration                                     |
 | - [UpgradeEtrogBatchNumber](#Sequencer_StreamServer_UpgradeEtrogBatchNumber ) | No      | integer | No         | -          | UpgradeEtrogBatchNumber is the batch number of the upgrade etrog |
 | - [WriteTimeout](#Sequencer_StreamServer_WriteTimeout )                       | No      | string  | No         | -          | Duration                                                         |
-| - [InactivityTimeout](#Sequencer_StreamServer_InactivityTimeout )             | No      | string  | No         | -          | Duration                                                         |
-| - [InactivityCheckInterval](#Sequencer_StreamServer_InactivityCheckInterval ) | No      | string  | No         | -          | Duration                                                         |
 
 #### <a name="Sequencer_StreamServer_Port"></a>10.9.1. `Sequencer.StreamServer.Port`
 
@@ -2668,58 +2666,6 @@ UpgradeEtrogBatchNumber=0
 WriteTimeout="5s"
 ```
 
-#### <a name="Sequencer_StreamServer_InactivityTimeout"></a>10.9.9. `Sequencer.StreamServer.InactivityTimeout`
-
-**Title:** Duration
-
-**Type:** : `string`
-
-**Default:** `"2m0s"`
-
-**Description:** InactivityTimeout is the timeout to kill an inactive datastream client connection
-
-**Examples:** 
-
-```json
-"1m"
-```
-
-```json
-"300ms"
-```
-
-**Example setting the default value** ("2m0s"):
-```
-[Sequencer.StreamServer]
-InactivityTimeout="2m0s"
-```
-
-#### <a name="Sequencer_StreamServer_InactivityCheckInterval"></a>10.9.10. `Sequencer.StreamServer.InactivityCheckInterval`
-
-**Title:** Duration
-
-**Type:** : `string`
-
-**Default:** `"5s"`
-
-**Description:** InactivityCheckInterval is the time interval to check for datastream client connections that have reached the inactivity timeout to kill them
-
-**Examples:** 
-
-```json
-"1m"
-```
-
-```json
-"300ms"
-```
-
-**Example setting the default value** ("5s"):
-```
-[Sequencer.StreamServer]
-InactivityCheckInterval="5s"
-```
-
 ## <a name="SequenceSender"></a>11. `[SequenceSender]`
 
 **Type:** : `object`
@@ -2736,6 +2682,7 @@ InactivityCheckInterval="5s"
 | - [PrivateKey](#SequenceSender_PrivateKey )                                                             | No      | object           | No         | -          | PrivateKey defines all the key store files that are going<br />to be read in order to provide the private keys to sign the L1 txs                                                                                                                                                                                                                                                                                             |
 | - [ForkUpgradeBatchNumber](#SequenceSender_ForkUpgradeBatchNumber )                                     | No      | integer          | No         | -          | Batch number where there is a forkid change (fork upgrade)                                                                                                                                                                                                                                                                                                                                                                    |
 | - [GasOffset](#SequenceSender_GasOffset )                                                               | No      | integer          | No         | -          | GasOffset is the amount of gas to be added to the gas estimation in order<br />to provide an amount that is higher than the estimated one. This is used<br />to avoid the TX getting reverted in case something has changed in the network<br />state after the estimation which can cause the TX to require more gas to be<br />executed.<br /><br />ex:<br />gas estimation: 1000<br />gas offset: 100<br />final gas: 1100 |
+| - [MaxBatchesForL1](#SequenceSender_MaxBatchesForL1 )                                                   | No      | integer          | No         | -          | MaxBatchesForL1 is the maximum amount of batches to be sequenced in a single L1 tx                                                                                                                                                                                                                                                                                                                                            |
 | - [SequenceL1BlockConfirmations](#SequenceSender_SequenceL1BlockConfirmations )                         | No      | integer          | No         | -          | SequenceL1BlockConfirmations is number of blocks to consider a sequence sent to L1 as final                                                                                                                                                                                                                                                                                                                                   |
 
 ### <a name="SequenceSender_WaitPeriodSendSequence"></a>11.1. `SequenceSender.WaitPeriodSendSequence`
@@ -2931,7 +2878,21 @@ final gas: 1100
 GasOffset=80000
 ```
 
-### <a name="SequenceSender_SequenceL1BlockConfirmations"></a>11.10. `SequenceSender.SequenceL1BlockConfirmations`
+### <a name="SequenceSender_MaxBatchesForL1"></a>11.10. `SequenceSender.MaxBatchesForL1`
+
+**Type:** : `integer`
+
+**Default:** `300`
+
+**Description:** MaxBatchesForL1 is the maximum amount of batches to be sequenced in a single L1 tx
+
+**Example setting the default value** (300):
+```
+[SequenceSender]
+MaxBatchesForL1=300
+```
+
+### <a name="SequenceSender_SequenceL1BlockConfirmations"></a>11.11. `SequenceSender.SequenceL1BlockConfirmations`
 
 **Type:** : `integer`
 
@@ -2967,6 +2928,10 @@ SequenceL1BlockConfirmations=32
 | - [GeneratingProofCleanupThreshold](#Aggregator_GeneratingProofCleanupThreshold )                   | No      | string  | No         | -          | GeneratingProofCleanupThreshold represents the time interval after<br />which a proof in generating state is considered to be stuck and<br />allowed to be cleared.                                                                                                                                                                                                                                                           |
 | - [GasOffset](#Aggregator_GasOffset )                                                               | No      | integer | No         | -          | GasOffset is the amount of gas to be added to the gas estimation in order<br />to provide an amount that is higher than the estimated one. This is used<br />to avoid the TX getting reverted in case something has changed in the network<br />state after the estimation which can cause the TX to require more gas to be<br />executed.<br /><br />ex:<br />gas estimation: 1000<br />gas offset: 100<br />final gas: 1100 |
 | - [UpgradeEtrogBatchNumber](#Aggregator_UpgradeEtrogBatchNumber )                                   | No      | integer | No         | -          | UpgradeEtrogBatchNumber is the number of the first batch after upgrading to etrog                                                                                                                                                                                                                                                                                                                                             |
+| - [SettlementBackend](#Aggregator_SettlementBackend )                                               | No      | string  | No         | -          | SettlementBackend configuration defines how a final ZKP should be settled. Directly to L1 or over the Beethoven service.                                                                                                                                                                                                                                                                                                      |
+| - [AggLayerTxTimeout](#Aggregator_AggLayerTxTimeout )                                               | No      | string  | No         | -          | Duration                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| - [AggLayerURL](#Aggregator_AggLayerURL )                                                           | No      | string  | No         | -          | AggLayerURL url of the agglayer service                                                                                                                                                                                                                                                                                                                                                                                       |
+| - [SequencerPrivateKey](#Aggregator_SequencerPrivateKey )                                           | No      | object  | No         | -          | SequencerPrivateKey Private key of the trusted sequencer                                                                                                                                                                                                                                                                                                                                                                      |
 | - [BatchProofL1BlockConfirmations](#Aggregator_BatchProofL1BlockConfirmations )                     | No      | integer | No         | -          | BatchProofL1BlockConfirmations is number of L1 blocks to consider we can generate the proof for a virtual batch                                                                                                                                                                                                                                                                                                               |
 
 ### <a name="Aggregator_Host"></a>12.1. `Aggregator.Host`
@@ -3245,7 +3210,99 @@ GasOffset=0
 UpgradeEtrogBatchNumber=0
 ```
 
-### <a name="Aggregator_BatchProofL1BlockConfirmations"></a>12.16. `Aggregator.BatchProofL1BlockConfirmations`
+### <a name="Aggregator_SettlementBackend"></a>12.16. `Aggregator.SettlementBackend`
+
+**Type:** : `string`
+
+**Default:** `"agglayer"`
+
+**Description:** SettlementBackend configuration defines how a final ZKP should be settled. Directly to L1 or over the Beethoven service.
+
+**Example setting the default value** ("agglayer"):
+```
+[Aggregator]
+SettlementBackend="agglayer"
+```
+
+### <a name="Aggregator_AggLayerTxTimeout"></a>12.17. `Aggregator.AggLayerTxTimeout`
+
+**Title:** Duration
+
+**Type:** : `string`
+
+**Default:** `"5m0s"`
+
+**Description:** AggLayerTxTimeout is the interval time to wait for a tx to be mined from the agglayer
+
+**Examples:** 
+
+```json
+"1m"
+```
+
+```json
+"300ms"
+```
+
+**Example setting the default value** ("5m0s"):
+```
+[Aggregator]
+AggLayerTxTimeout="5m0s"
+```
+
+### <a name="Aggregator_AggLayerURL"></a>12.18. `Aggregator.AggLayerURL`
+
+**Type:** : `string`
+
+**Default:** `"http://zkevm-agglayer"`
+
+**Description:** AggLayerURL url of the agglayer service
+
+**Example setting the default value** ("http://zkevm-agglayer"):
+```
+[Aggregator]
+AggLayerURL="http://zkevm-agglayer"
+```
+
+### <a name="Aggregator_SequencerPrivateKey"></a>12.19. `[Aggregator.SequencerPrivateKey]`
+
+**Type:** : `object`
+**Description:** SequencerPrivateKey Private key of the trusted sequencer
+
+| Property                                                | Pattern | Type   | Deprecated | Definition | Title/Description                                      |
+| ------------------------------------------------------- | ------- | ------ | ---------- | ---------- | ------------------------------------------------------ |
+| - [Path](#Aggregator_SequencerPrivateKey_Path )         | No      | string | No         | -          | Path is the file path for the key store file           |
+| - [Password](#Aggregator_SequencerPrivateKey_Password ) | No      | string | No         | -          | Password is the password to decrypt the key store file |
+
+#### <a name="Aggregator_SequencerPrivateKey_Path"></a>12.19.1. `Aggregator.SequencerPrivateKey.Path`
+
+**Type:** : `string`
+
+**Default:** `"/pk/sequencer.keystore"`
+
+**Description:** Path is the file path for the key store file
+
+**Example setting the default value** ("/pk/sequencer.keystore"):
+```
+[Aggregator.SequencerPrivateKey]
+Path="/pk/sequencer.keystore"
+```
+
+#### <a name="Aggregator_SequencerPrivateKey_Password"></a>12.19.2. `Aggregator.SequencerPrivateKey.Password`
+
+**Type:** : `string`
+
+**Default:** `"testonly"`
+
+**Description:** Password is the password to decrypt the key store file
+
+**Example setting the default value** ("testonly"):
+```
+[Aggregator.SequencerPrivateKey]
+Password="testonly"
+```
+
+### <a name="Aggregator_BatchProofL1BlockConfirmations"></a>12.20. `Aggregator.BatchProofL1BlockConfirmations`
 
 **Type:** : `integer`
 
@@ -3321,32 +3378,47 @@ chainId=0
 **Type:** : `object`
 **Description:** L1: Genesis of the rollup, first block number and root
 
-| Property                                             | Pattern | Type             | Deprecated | Definition | Title/Description                                                             |
-| ---------------------------------------------------- | ------- | ---------------- | ---------- | ---------- | ----------------------------------------------------------------------------- |
-| - [BlockNumber](#NetworkConfig_Genesis_BlockNumber ) | No      | integer          | No         | -          | BlockNumber is the block number where the polygonZKEVM smc was deployed on L1 |
-| - [Root](#NetworkConfig_Genesis_Root )               | No      | array of integer | No         | -          | Root hash of the genesis block                                                |
-| - [Actions](#NetworkConfig_Genesis_Actions )         | No      | array of object  | No         | -          | Actions is the data to populate into the state trie                           |
+| Property                                                                       | Pattern | Type             | Deprecated | Definition | Title/Description                                                                           |
+| ------------------------------------------------------------------------------ | ------- | ---------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------- |
+| - [RollupBlockNumber](#NetworkConfig_Genesis_RollupBlockNumber )               | No      | integer          | No         | -          | RollupBlockNumber is the block number where the polygonZKEVM smc was deployed on L1         |
+| - [RollupManagerBlockNumber](#NetworkConfig_Genesis_RollupManagerBlockNumber ) | No      | integer          | No         | -          | RollupManagerBlockNumber is the block number where the RollupManager smc was deployed on L1 |
+| - [Root](#NetworkConfig_Genesis_Root )                                         | No      | array of integer | No         | -          | Root hash of the genesis block                                                              |
+| - [Actions](#NetworkConfig_Genesis_Actions )                                   | No      | array of object  | No         | -          | Actions is the data to populate into the state trie                                         |
 
-#### <a name="NetworkConfig_Genesis_BlockNumber"></a>13.2.1. `NetworkConfig.Genesis.BlockNumber`
+#### <a name="NetworkConfig_Genesis_RollupBlockNumber"></a>13.2.1. `NetworkConfig.Genesis.RollupBlockNumber`
 
 **Type:** : `integer`
 
 **Default:** `0`
 
-**Description:** BlockNumber is the block number where the polygonZKEVM smc was deployed on L1
+**Description:** RollupBlockNumber is the block number where the polygonZKEVM smc was deployed on L1
 
 **Example setting the default value** (0):
 ```
 [NetworkConfig.Genesis]
-BlockNumber=0
+RollupBlockNumber=0
 ```
 
-#### <a name="NetworkConfig_Genesis_Root"></a>13.2.2. `NetworkConfig.Genesis.Root`
+#### <a name="NetworkConfig_Genesis_RollupManagerBlockNumber"></a>13.2.2. `NetworkConfig.Genesis.RollupManagerBlockNumber`
+
+**Type:** : `integer`
+
+**Default:** `0`
+
+**Description:** RollupManagerBlockNumber is the block number where the RollupManager smc was deployed on L1
+
+**Example setting the default value** (0):
+```
+[NetworkConfig.Genesis]
+RollupManagerBlockNumber=0
+```
+
+#### <a name="NetworkConfig_Genesis_Root"></a>13.2.3. `NetworkConfig.Genesis.Root`
 
 **Type:** : `array of integer`
 **Description:** Root hash of the genesis block
 
-#### <a name="NetworkConfig_Genesis_Actions"></a>13.2.3. `NetworkConfig.Genesis.Actions`
+#### <a name="NetworkConfig_Genesis_Actions"></a>13.2.4. `NetworkConfig.Genesis.Actions`
 
 **Type:** : `array of object`
 **Description:** Actions is the data to populate into the state trie
@@ -3363,7 +3435,7 @@ BlockNumber=0
 | ----------------------------------------------------- | ------------------------------------------------------------------------- |
 | [Actions items](#NetworkConfig_Genesis_Actions_items) | GenesisAction represents one of the values set on the SMT during genesis. |
 
-##### <a name="autogenerated_heading_3"></a>13.2.3.1. [NetworkConfig.Genesis.Actions.Actions items]
+##### <a name="autogenerated_heading_3"></a>13.2.4.1. [NetworkConfig.Genesis.Actions.Actions items]
 
 **Type:** : `object`
 **Description:** GenesisAction represents one of the values set on the SMT during genesis.
@@ -3378,31 +3450,31 @@ BlockNumber=0
 | - [value](#NetworkConfig_Genesis_Actions_items_value )                     | No      | string  | No         | -          | -                 |
 | - [root](#NetworkConfig_Genesis_Actions_items_root )                       | No      | string  | No         | -          | -                 |
 
-##### <a name="NetworkConfig_Genesis_Actions_items_address"></a>13.2.3.1.1. `NetworkConfig.Genesis.Actions.Actions items.address`
+##### <a name="NetworkConfig_Genesis_Actions_items_address"></a>13.2.4.1.1. `NetworkConfig.Genesis.Actions.Actions items.address`
 
 **Type:** : `string`
 
-##### <a name="NetworkConfig_Genesis_Actions_items_type"></a>13.2.3.1.2. `NetworkConfig.Genesis.Actions.Actions items.type`
+##### <a name="NetworkConfig_Genesis_Actions_items_type"></a>13.2.4.1.2. `NetworkConfig.Genesis.Actions.Actions items.type`
 
 **Type:** : `integer`
 
-##### <a name="NetworkConfig_Genesis_Actions_items_storagePosition"></a>13.2.3.1.3. `NetworkConfig.Genesis.Actions.Actions items.storagePosition`
+##### <a name="NetworkConfig_Genesis_Actions_items_storagePosition"></a>13.2.4.1.3. `NetworkConfig.Genesis.Actions.Actions items.storagePosition`
 
 **Type:** : `string`
 
-##### <a name="NetworkConfig_Genesis_Actions_items_bytecode"></a>13.2.3.1.4. `NetworkConfig.Genesis.Actions.Actions items.bytecode`
+##### <a name="NetworkConfig_Genesis_Actions_items_bytecode"></a>13.2.4.1.4. `NetworkConfig.Genesis.Actions.Actions items.bytecode`
 
 **Type:** : `string`
 
-##### <a name="NetworkConfig_Genesis_Actions_items_key"></a>13.2.3.1.5. `NetworkConfig.Genesis.Actions.Actions items.key`
+##### <a name="NetworkConfig_Genesis_Actions_items_key"></a>13.2.4.1.5. `NetworkConfig.Genesis.Actions.Actions items.key`
 
 **Type:** : `string`
 
-##### <a name="NetworkConfig_Genesis_Actions_items_value"></a>13.2.3.1.6. `NetworkConfig.Genesis.Actions.Actions items.value`
+##### <a name="NetworkConfig_Genesis_Actions_items_value"></a>13.2.4.1.6. `NetworkConfig.Genesis.Actions.Actions items.value`
 
 **Type:** : `string`
 
-##### <a name="NetworkConfig_Genesis_Actions_items_root"></a>13.2.3.1.7. `NetworkConfig.Genesis.Actions.Actions items.root`
+##### <a name="NetworkConfig_Genesis_Actions_items_root"></a>13.2.4.1.7. `NetworkConfig.Genesis.Actions.Actions items.root`
 
 **Type:** : `string`
 

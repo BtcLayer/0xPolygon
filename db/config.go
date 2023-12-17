@@ -1,24 +1,24 @@
 package db
 
-// Config struct
+// Config provide fields to configure the pool
 type Config struct {
-	// Database type
-	Database string `mapstructure:"Database"`
-
 	// Database name
 	Name string `mapstructure:"Name"`
 
-	// User name
+	// Database User name
 	User string `mapstructure:"User"`
 
-	// Password of the user
+	// Database Password of the user
 	Password string `mapstructure:"Password"`
 
-	// Host address
+	// Host address of database
 	Host string `mapstructure:"Host"`
 
-	// Port Number
+	// Port Number of database
 	Port string `mapstructure:"Port"`
+
+	// EnableLog
+	EnableLog bool `mapstructure:"EnableLog"`
 
 	// MaxConns is the maximum number of connections in the pool.
 	MaxConns int `mapstructure:"MaxConns"`

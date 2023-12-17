@@ -5,11 +5,9 @@ StreamType = 1
 [Offline]
 Port = 6901
 Filename = "datastream.bin"
-Version = 4
+Version = 3
 ChainID = 1440
 WriteTimeout = "5s"
-InactivityTimeout = "120s"
-InactivityCheckInterval = "5s"
 UpgradeEtrogBatchNumber = 0
 
 [StateDB]
@@ -22,8 +20,8 @@ EnableLog = false
 MaxConns = 200
 
 [MerkleTree]
-URI = ""
-MaxThreads = 0
+URI = "localhost:50061"
+MaxThreads = 20
 CacheFile = "merkle_tree_cache.json"
 
 [Log]

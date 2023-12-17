@@ -86,12 +86,6 @@ func (f *finalizer) DSSendBatchBookmark(ctx context.Context, batchNumber uint64)
 	}
 }
 
-func (f *finalizer) checkDSBufferIsFull(ctx context.Context) {
-	if f.dataToStreamCount.Load() == datastreamChannelBufferSize {
-		f.Halt(ctx, fmt.Errorf("datastream channel buffer full"), true)
-	}
-}
-
 func (f *finalizer) DSSendBatchStart(ctx context.Context, batchNumber uint64, isForced bool) {
 	forkID := f.stateIntf.GetForkIDByBatchNumber(batchNumber)
 
@@ -128,5 +122,11 @@ func (f *finalizer) DSSendBatchEnd(ctx context.Context, batchNumber uint64, stat
 		}
 
 		f.dataToStreamCount.Add(1)
+	}
+}
+
+func (f *finalizer) checkDSBufferIsFull(ctx context.Context) {
+	if f.dataToStreamCount.Load() == datastreamChannelBufferSize {
+		f.Halt(ctx, fmt.Errorf("datastream channel buffer full"), true)
 	}
 }

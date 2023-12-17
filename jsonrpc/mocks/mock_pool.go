@@ -98,6 +98,34 @@ func (_m *PoolMock) CalculateEffectiveGasPricePercentage(gasPrice *big.Int, effe
 	return r0, r1
 }
 
+// CheckPolicy provides a mock function with given fields: ctx, policy, address
+func (_m *PoolMock) CheckPolicy(ctx context.Context, policy pool.PolicyName, address common.Address) (bool, error) {
+	ret := _m.Called(ctx, policy, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckPolicy")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, pool.PolicyName, common.Address) (bool, error)); ok {
+		return rf(ctx, policy, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, pool.PolicyName, common.Address) bool); ok {
+		r0 = rf(ctx, policy, address)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, pool.PolicyName, common.Address) error); ok {
+		r1 = rf(ctx, policy, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CountPendingTransactions provides a mock function with given fields: ctx
 func (_m *PoolMock) CountPendingTransactions(ctx context.Context) (uint64, error) {
 	ret := _m.Called(ctx)

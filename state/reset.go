@@ -14,7 +14,6 @@ func (s *State) Reset(ctx context.Context, blockNumber uint64, dbTx pgx.Tx) erro
 	//  - VerifiedBatches
 	//  - Entries in exit_root table
 	err := s.ResetToL1BlockNumber(ctx, blockNumber, dbTx)
-
 	if err != nil {
 		log.Error("error resetting L1BlockNumber. Error: ", err)
 		return err
@@ -30,5 +29,4 @@ func (s *State) ResetL1InfoTree() {
 	// is going to be a commit or a rollback. So is going to be rebuild on the next
 	// request that needs it.
 	s.l1InfoTree = nil
-	s.l1InfoTreeRecursive = nil
 }

@@ -1,4 +1,4 @@
-package zkevmbridgeservice
+package zkevm
 
 import (
 	"fmt"

@@ -76,11 +76,7 @@ func InitTestState(stateCfg state.Config) *state.State {
 	if err != nil {
 		panic(err)
 	}
-	mtr, err := l1infotree.NewL1InfoTreeRecursive(32)
-	if err != nil {
-		panic(err)
-	}
-	return state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(stateCfg, stateDb), ExecutorClient, stateTree, eventLog, mt, mtr)
+	return state.NewState(stateCfg, pgstatestorage.NewPostgresStorage(stateCfg, stateDb), ExecutorClient, stateTree, eventLog, mt)
 }
 
 func InitOrResetDB(cfg db.Config) {

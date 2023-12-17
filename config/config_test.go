@@ -12,6 +12,7 @@ import (
 	"github.com/0xPolygonHermez/zkevm-node/aggregator"
 	"github.com/0xPolygonHermez/zkevm-node/config"
 	"github.com/0xPolygonHermez/zkevm-node/config/types"
+	"github.com/0xPolygonHermez/zkevm-node/dataavailability"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -58,11 +59,15 @@ func Test_Defaults(t *testing.T) {
 		},
 		{
 			path:          "Synchronizer.L2Synchronization.ReprocessFullBatchOnClose",
-			expectedValue: true,
+			expectedValue: false,
 		},
 		{
 			path:          "Synchronizer.L2Synchronization.CheckLastL2BlockHashOnCloseBatch",
 			expectedValue: true,
+		},
+		{
+			path:          "Synchronizer.L2Synchronization.DataSourcePriority",
+			expectedValue: []dataavailability.DataSourcePriority{"local", "trusted", "external"},
 		},
 		{
 			path:          "Synchronizer.L1BlockCheck.Enabled",
@@ -76,7 +81,6 @@ func Test_Defaults(t *testing.T) {
 			path:          "Synchronizer.L2Synchronization.Enabled",
 			expectedValue: true,
 		},
-
 		{
 			path:          "Sequencer.DeletePoolTxsL1BlockConfirmations",
 			expectedValue: uint64(100),
@@ -174,14 +178,6 @@ func Test_Defaults(t *testing.T) {
 			expectedValue: types.NewDuration(5 * time.Second),
 		},
 		{
-			path:          "Sequencer.StreamServer.InactivityTimeout",
-			expectedValue: types.NewDuration(120 * time.Second),
-		},
-		{
-			path:          "Sequencer.StreamServer.InactivityCheckInterval",
-			expectedValue: types.NewDuration(5 * time.Second),
-		},
-		{
 			path:          "Sequencer.StreamServer.Enabled",
 			expectedValue: false,
 		},
@@ -206,6 +202,10 @@ func Test_Defaults(t *testing.T) {
 			expectedValue: uint64(80000),
 		},
 		{
+			path:          "SequenceSender.MaxBatchesForL1",
+			expectedValue: uint64(300),
+		},
+		{
 			path:          "SequenceSender.SequenceL1BlockConfirmations",
 			expectedValue: uint64(32),
 		},
@@ -215,19 +215,19 @@ func Test_Defaults(t *testing.T) {
 		},
 		{
 			path:          "NetworkConfig.L1Config.L1ChainID",
-			expectedValue: uint64(5),
+			expectedValue: uint64(1337),
 		},
 		{
 			path:          "NetworkConfig.L1Config.ZkEVMAddr",
-			expectedValue: common.HexToAddress("0xa997cfD539E703921fD1e3Cf25b4c241a27a4c7A"),
+			expectedValue: common.HexToAddress("0x8dAF17A20c9DBA35f005b6324F493785D239719d"),
 		},
 		{
 			path:          "NetworkConfig.L1Config.PolAddr",
-			expectedValue: common.HexToAddress("0x1319D23c2F7034F52Eb07399702B040bA278Ca49"),
+			expectedValue: common.HexToAddress("0x5FbDB2315678afecb367f032d93F642f64180aa3"),
 		},
 		{
 			path:          "NetworkConfig.L1Config.GlobalExitRootManagerAddr",
-			expectedValue: common.HexToAddress("0x4d9427DCA0406358445bC0a8F88C26b704004f74"),
+			expectedValue: common.HexToAddress("0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"),
 		},
 		{
 			path:          "Etherman.MultiGasProvider",
@@ -587,7 +587,8 @@ func Test_Defaults(t *testing.T) {
 	require.NoError(t, os.WriteFile(file.Name(), []byte("{}"), 0600))
 
 	flagSet := flag.NewFlagSet("", flag.PanicOnError)
-	flagSet.String(config.FlagNetwork, "testnet", "")
+	flagSet.String(config.FlagNetwork, "custom", "")
+	flagSet.String(config.FlagCustomNetwork, "../test/config/test.genesis.config.json", "")
 	ctx := cli.NewContext(cli.NewApp(), flagSet, nil)
 	cfg, err := config.Load(ctx, true)
 	if err != nil {
@@ -625,7 +626,8 @@ func TestEnvVarArrayDecoding(t *testing.T) {
 	}()
 	require.NoError(t, os.WriteFile(file.Name(), []byte("{}"), 0600))
 	flagSet := flag.NewFlagSet("", flag.PanicOnError)
-	flagSet.String(config.FlagNetwork, "testnet", "")
+	flagSet.String(config.FlagNetwork, "custom", "")
+	flagSet.String(config.FlagCustomNetwork, "../test/config/test.genesis.config.json", "")
 	ctx := cli.NewContext(cli.NewApp(), flagSet, nil)
 
 	os.Setenv("ZKEVM_NODE_LOG_OUTPUTS", "a,b,c")

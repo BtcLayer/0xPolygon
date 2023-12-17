@@ -93,9 +93,6 @@ func (tree *StateTree) GetCode(ctx context.Context, address common.Address, root
 	}
 
 	k := new(big.Int).SetBytes(scCodeHash)
-	if k.Cmp(big.NewInt(0)) == 0 {
-		return []byte{}, nil
-	}
 
 	// this code gets actual smart contract code from sc code storage
 	scCode, err := tree.getProgram(ctx, scalarToh4(k))

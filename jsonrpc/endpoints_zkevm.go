@@ -195,6 +195,52 @@ func (z *ZKEVMEndpoints) GetBatchByNumber(batchNumber types.BatchNumber, fullTx 
 	return rpcBatch, nil
 }
 
+type batchDataFunc func(ctx context.Context, batchNumbers []uint64, dbTx pgx.Tx) (map[uint64][]byte, error)
+
+// GetBatchDataByNumbers returns L2 batch data by batch numbers.
+func (z *ZKEVMEndpoints) GetBatchDataByNumbers(filter types.BatchFilter) (interface{}, types.Error) {
+	return z.getBatchData(filter, z.state.GetBatchL2DataByNumbers)
+}
+
+// GetForcedBatchDataByNumbers returns forced batch data by batch numbers.
+func (z *ZKEVMEndpoints) GetForcedBatchDataByNumbers(filter types.BatchFilter) (interface{}, types.Error) {
+	return z.getBatchData(filter, z.state.GetForcedBatchDataByNumbers)
+}
+
+func (z *ZKEVMEndpoints) getBatchData(filter types.BatchFilter, f batchDataFunc) (interface{}, types.Error) {
+	ctx := context.Background()
+	batchNumbers := make([]uint64, 0, len(filter.Numbers))
+	for _, bn := range filter.Numbers {
+		n, rpcErr := bn.GetNumericBatchNumber(ctx, z.state, z.etherman, nil)
+		if rpcErr != nil {
+			return nil, rpcErr
+		}
+		batchNumbers = append(batchNumbers, n)
+	}
+
+	batchesData, err := f(ctx, batchNumbers, nil)
+	if errors.Is(err, state.ErrNotFound) {
+		return nil, nil
+	} else if err != nil {
+		return RPCErrorResponse(types.DefaultErrorCode,
+			fmt.Sprintf("couldn't load batch data from state by numbers %v", filter.Numbers), err, true)
+	}
+
+	ret := make([]*types.BatchData, 0, len(batchNumbers))
+	for _, n := range batchNumbers {
+		data := &types.BatchData{Number: types.ArgUint64(n)}
+		if b, ok := batchesData[n]; ok {
+			data.BatchL2Data = b
+			data.Empty = false
+		} else {
+			data.Empty = true
+		}
+		ret = append(ret, data)
+	}
+
+	return types.BatchDataResult{Data: ret}, nil
+}
+
 // GetFullBlockByNumber returns information about a block by block number
 func (z *ZKEVMEndpoints) GetFullBlockByNumber(number types.BlockNumber, fullTx bool) (interface{}, types.Error) {
 	ctx := context.Background()
@@ -499,7 +545,7 @@ func (z *ZKEVMEndpoints) internalEstimateGasPriceAndFee(ctx context.Context, arg
 
 		if txEGP.Cmp(txGasPrice) == -1 { // txEGP < txGasPrice
 			// We need to "round" the final effectiveGasPrice to a 256 fraction of the txGasPrice
-			txEGPPct, err = z.pool.CalculateEffectiveGasPricePercentage(txGasPrice, txEGP)
+			txEGPPct, err = state.CalculateEffectiveGasPricePercentage(txGasPrice, txEGP)
 			if err != nil {
 				return nil, nil, types.NewRPCError(types.DefaultErrorCode, "failed to calculate effective gas price percentage", err, false)
 			}

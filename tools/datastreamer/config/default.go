@@ -3,15 +3,14 @@ package config
 // DefaultValues is the default configuration
 const DefaultValues = `
 [Online]
-URI = "localhost:6900"
+URI = "zkevm-sequencer:6900"
 StreamType = 1
 
 [Offline]
 Port = 6901
-Filename = "datastream.bin"
-Version = 4
+Filename = "datastreamer.bin"
+Version = 1
 ChainID = 1440
-WriteTimeout = "5s"
 UpgradeEtrogBatchNumber = 0
 
 [StateDB]
@@ -23,9 +22,13 @@ Port = "5432"
 EnableLog = false	
 MaxConns = 200
 
+[Executor]
+URI = "zkevm-prover:50071"
+MaxGRPCMessageSize = 100000000
+
 [MerkleTree]
-URI = ""
-MaxThreads = 0
+URI = "zkevm-prover:50061"
+MaxThreads = 20
 CacheFile = ""
 
 [Log]
